@@ -1,12 +1,12 @@
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait, Select
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from common.input_select import selectByLabel, selectByLabelOnModal, isSelectedByLabel, isSelectedByLabelOnModal
-from common.button import clickByValue, clickByText
+from common.button import clickByValue, clickByText, clickButtonByRow, clickFooterButtonByValue
 from common.input_check import checkboxByTextValue
-from common.input_text import textByLabel, textIsSetByLabel
+from common.input_text import textModalByRow
 from browser.browser import Browser
+from office_sud_kz.auth import iin
 import time
 
 def run(browser: Browser)->bool:
@@ -16,38 +16,85 @@ def run(browser: Browser)->bool:
         selectByLabel(browser, "Категория дела", "48")
         time.sleep(1)
 
-    print("modal start")
-
+# представитель
     while not isModalOpened(browser, 'selectSideModalDialog'):
         clickByText(browser, 'button', 'Добавить участника процесса')
         time.sleep(1)
 
-    print(1)
-    bin = "220440007472"
-    while not isModalOpened(browser, 'jurModalDialog'):
-        print(2)
-        while not isSelectedByLabelOnModal(browser, "Тип лица", "true"):
-            selectByLabelOnModal(browser, "Тип лица", "true")
+    divId = "fizModalDialog"
+
+    while not isModalOpened(browser, divId):
+        while not isSelectedByLabelOnModal(browser, "Сторона процесса", "5"):
+            selectByLabelOnModal(browser, "Сторона процесса", "5")
             time.sleep(1)
-        print(3)
 
         clickByValue(browser, "Далее")
         time.sleep(1)
 
-        print(4)
-        textByLabel(browser, 'БИН', bin)
+    while not verifyModalRowValue(browser, divId, 3, iin):
+        textModalByRow(browser, divId, 3, iin)
+        clickButtonByRow(browser, divId, 3)
+        time.sleep(1)
 
-        # print('is set - ', textIsSetByLabel(browser, 'БИН', bin))
-        # while not textIsSetByLabel(browser, 'БИН', bin):
-        #     print('loop---1')
-        #     textByLabel(browser, 'БИН', bin)
-        #     # textByLabel(browser, "Пароль", password)
-        #     time.sleep(1)
-        print(5)
-        # print('is set - ', textIsSetByLabel(browser, 'БИН', bin))
+    clickFooterButtonByValue(browser, divId, "Сохранить")
+    time.sleep(3)
 
+# истец
+    while not isModalOpened(browser, 'selectSideModalDialog'):
+        clickByText(browser, 'button', 'Добавить участника процесса')
+        time.sleep(1)
 
-    print("modal end")
+    divId = "jurModalDialog"
+    bin = "220440007472"
+    address = "Алматинская область, Илийский р-н, с.о. Асқар Тоқпанов,с. Асқар Тоқпанов, ул. Қ.Байқадамқызы, д. 71, кв. 2"
+    detail = "ИИК: KZ55601A861010717701 Банк: в АО «Народный банк Казахстана» БИК: HSBKKZKX"
+    while not isModalOpened(browser, divId):
+        while not isSelectedByLabelOnModal(browser, "Тип лица", "true"):
+            selectByLabelOnModal(browser, "Тип лица", "true")
+            time.sleep(1)
+
+        clickByValue(browser, "Далее")
+        time.sleep(1)
+
+    while not verifyModalRowValue(browser, divId, 4, bin) \
+        or not verifyModalRowValue(browser, divId, 7, address) \
+        or not verifyModalRowValue(browser, divId, 8, detail):
+
+        textModalByRow(browser, divId, 4, bin)
+        clickButtonByRow(browser, divId, 4)
+        time.sleep(1)
+        textModalByRow(browser, divId, 7, address)
+        textModalByRow(browser, divId, 8, detail)
+
+    clickFooterButtonByValue(browser, divId, "Сохранить")
+    time.sleep(3)
+
+    browser.refresh()
+# ответчик
+    print('otvet4ik start')
+    while not isModalOpened(browser, 'selectSideModalDialog'):
+        clickByText(browser, 'button', 'Добавить участника процесса')
+        time.sleep(1)
+
+    divId = "fizModalDialog"
+    iin_otvet4ik = '930407300610'
+    while not isModalOpened(browser, divId):
+        print('modal not opened 1')
+        while not isSelectedByLabelOnModal(browser, "Сторона процесса", "2"):
+            selectByLabelOnModal(browser, "Сторона процесса", "2")
+            time.sleep(1)
+        clickByValue(browser, "Далее")
+        time.sleep(1)
+
+    while not verifyModalRowValue(browser, divId, 3, iin_otvet4ik):
+        print('modal not opened 2')
+        textModalByRow(browser, divId, 3, iin_otvet4ik)
+        clickButtonByRow(browser, divId, 3)
+        time.sleep(1)
+
+    clickFooterButtonByValue(browser, divId, "Сохранить")
+    time.sleep(3)
+    print('otvet4ik end')
 
     oblastMap = {
         "город Астана": {
@@ -450,33 +497,19 @@ def run(browser: Browser)->bool:
     if not bool(sudValue) or not bool(sudName):
         raise Exception('Подсудность в справочнике не найдены')
     
-
     while not isSelectedByLabel(browser, "Область (столица, город республиканского значения)", oblastValue) or not isSelectedByLabel(browser, "Судебный орган", sudValue):
         selectByLabel(browser, "Область (столица, город республиканского значения)", oblastValue)
         if not htmlHasText(browser, sudName):
             continue
         time.sleep(1)
         selectByLabel(browser, "Судебный орган", sudValue)
-        time.sleep(1)
 
-    # checkboxByTextValue(browser, "Дело упрощенного производства", True)
+    checkboxByTextValue(browser, "Дело упрощенного производства", True)
+    while not htmlHasText(browser, "Информация об оплате"):
+            clickByText(browser, 'a' ,'Далее')
+            time.sleep(1)
+
     return True
-
-
-
-    # toSelect = wait.until(EC.presence_of_element_located((By.XPATH, '//label[normalize-space()="Тип производства"]/following-sibling::select')))
-    # Select(toSelect).select_by_value("CIVIL")
-
-    # toSelect = wait.until(EC.presence_of_element_located((By.XPATH, '//label[normalize-space()="Инстанция"]/following-sibling::select')))
-    # Select(toSelect).select_by_value("FIRSTINSTANCE")
-
-    # wait.until(has_isk_option)
-    # toSelect = wait.until(EC.presence_of_element_located((By.XPATH, '//label[normalize-space()="Тип документа"]/following-sibling::select')))
-    # Select(toSelect).select_by_value("3")
-# def has_isk_option(d):
-#     value = "3"
-#     options = d.find_elements(By.XPATH,'//label[normalize-space()="Тип документа"]/following-sibling::select/option')
-#     return any(o.get_attribute("value") == value for o in options)
 
 def isModalOpened(browser: Browser, modal_id: str) -> bool:
     try:
@@ -491,3 +524,10 @@ def htmlHasText(browser: Browser, text: str) -> bool:
         return True
     except:
         return False
+    
+def verifyModalRowValue(browser: Browser, div_id: str, row_index: int, expected: str) -> bool:
+    xpath = f"(//div[@id='{div_id}']//tbody/tr)[{row_index}]//input | (//div[@id='{div_id}']//tbody/tr)[{row_index}]//textarea"
+    el = browser.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+    actual = el.get_attribute("value") or el.text
+    is_ok = (actual.strip() == expected.strip())
+    return is_ok

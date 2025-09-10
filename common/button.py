@@ -17,6 +17,25 @@ def clickByIndex(browser: Browser, selector: str, index: int):
     elements = browser.driver.find_elements(By.CSS_SELECTOR, selector)
     elements[index].click()
 
+def clickButtonByRow(browser: Browser, div_id: str, row_index: int):
+    xpath = f"(//div[@id='{div_id}']//tbody/tr)[{row_index}]//button | (//div[@id='{div_id}']//tbody/tr)[{row_index}]//span[contains(@class,'input-group-addon')] | (//div[@id='{div_id}']//tbody/tr)[{row_index}]//a"
+    el = browser.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+
+    try:
+        el.click()
+    except Exception as e:
+        browser.driver.execute_script("arguments[0].click();", el)
+
+def clickFooterButtonByValue(browser: Browser, div_id: str, value: str):
+    xpath = f"//div[@id='{div_id}']//div[contains(@class,'modal-footer')]//input[@value='{value}']"
+    browser.wait.until(_clickIsReady(browser, xpath))
+    el = browser.driver.find_element(By.XPATH, xpath)
+
+    try:
+        el.click()
+    except Exception as e:
+        browser.driver.execute_script("arguments[0].click();", el)
+
 def _clickByXpath(browser: Browser, xpath: str):
     browser.wait.until(_clickIsReady(browser, xpath))
     el = browser.driver.find_element(By.XPATH, xpath)

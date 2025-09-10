@@ -11,7 +11,6 @@ class Browser:
         options = Options()
         # options.add_argument("--headless")       # Run without GUI
         # options.add_argument("--disable-gpu")    # Recommended for headless
-        # options.add_argument("--no-sandbox")     # Useful in Linux
         # options.add_argument("--disable-dev-shm-usage")  # Fixes some crashes
 
         self.driver = webdriver.Chrome(options=options)
@@ -27,11 +26,9 @@ class Browser:
                 return True 
             except TimeoutException:
                 if attempt < retries:
-                    print(f"[!] Page didn't load in {timeout}s, refreshing (attempt {attempt + 1})")
                     self.driver.refresh()
                 else:
-                    print(f"[!] Page failed to load after {retries + 1} attempts")
                     return False
-    
-    # def wait_for_page_load(self, timeout=10):
-        # self.wait.until(lambda d: d.execute_script("return document.readyState") == "interactive")
+                
+    def refresh(self):
+        self.driver.refresh()

@@ -11,11 +11,13 @@ from browser.browser import Browser
 
 import time
 
+iin = "010213500250"
+password = "Utepov2025!@#"
+
 def auth(browser: Browser)->bool:
     browser.safe_get("https://office.sud.kz/")
 
-    iin = "010213500250"
-    password = "Utepov2025!@#"
+    
 
     while not is_rus_selected(browser):
         clickByIndex(browser, "div.lang a", 1)

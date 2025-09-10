@@ -12,6 +12,28 @@ def textIsSetByPlaceholder(browser: Browser, placeholder: str, expected_text: st
     xpath = f'//input[@placeholder="{placeholder}" or @placeholder="{placeholder} "] | //textarea[@placeholder="{placeholder}" or @placeholder="{placeholder} "]'
     return _textIsSetByXpath(browser, xpath, expected_text)
 
+def textByLabel(browser: Browser, label_text: str, text: str):
+    label_xpath = f'//label[contains(normalize-space(.), "{label_text}")]'
+    label_el = browser.wait.until(EC.presence_of_element_located((By.XPATH, label_xpath)))
+
+    for_attr = label_el.get_attribute("for")
+    if not for_attr:
+        raise Exception(f'Label "{label_text}" has no "for" attribute')
+
+    input_xpath = f'//*[@id="{for_attr}"]'
+    input_el = browser.wait.until(EC.presence_of_element_located((By.XPATH, input_xpath)))
+
+    try:
+        input_el.clear()
+        input_el.send_keys(text)
+    except Exception:
+        # Fallback: force-set value with JS if normal typing fails
+        browser.driver.execute_script("""
+            arguments[0].setAttribute('value', arguments[1]);
+            arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
+            arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+        """, input_el, text)
+
 def _textByXpath(browser: Browser, xpath: str, text: str):
     browser.wait.until(_textIsReady(browser, xpath))
     text_el = browser.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
@@ -31,21 +53,25 @@ def _textIsSetByXpath(browser: Browser, xpath: str, expected_text: str) -> bool:
     try:
         browser.wait.until(_textIsReady(browser, xpath))
         text_el = browser.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
-        # print what was found
-        print(f"[textByLabel] Found element for label '{label_text}':")
-        print(text_el.get_attribute("outerHTML"))
         return text_el.get_attribute("value") == expected_text
     except:
         return False
-    
 
-def textByLabel(browser: Browser, label_text: str, text: str):
-    xpath = f'//label[normalize-space()="{label_text}"]/parent::td/following-sibling::td//input | ' \
-            f'//label[normalize-space()="{label_text}"]/parent::td/following-sibling::td//textarea | ' 
-    _textByXpath(browser, xpath, text)
+def textModalByRow(browser: Browser, div_id: str, row_index: int, text: str):
+    """
+    Fill text into the <input> or <textarea> inside the given row number (1-based)
+    inside a specific modal/container <div>.
+    Example: div_id="jurModalDialog", row_index=4 → <div id="jurModalDialog">...<tbody><tr>[4]</tr>
+    """
+    xpath = f"(//div[@id='{div_id}']//tbody/tr)[{row_index}]//input | (//div[@id='{div_id}']//tbody/tr)[{row_index}]//textarea"
+    el = browser.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
 
-
-def textIsSetByLabel(browser: Browser, label_text: str, expected_text: str) -> bool:
-    xpath = f'//label[normalize-space()="{label_text}"]/parent::td/following-sibling::td//input | ' \
-            f'//label[normalize-space()="{label_text}"]/parent::td/following-sibling::td//textarea | ' 
-    return _textIsSetByXpath(browser, xpath, expected_text)
+    try:
+        el.clear()
+        el.send_keys(text)
+    except Exception as e:
+        browser.driver.execute_script("""
+            arguments[0].setAttribute('value', arguments[1]);
+            arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
+            arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+        """, el, text)
