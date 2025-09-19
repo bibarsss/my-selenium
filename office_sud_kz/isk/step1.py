@@ -6,19 +6,18 @@ from common.button import clickByValue, clickByText, clickButtonByRow, clickFoot
 from common.input_check import checkboxByTextValue
 from common.input_text import textModalByRow
 from browser.browser import Browser
-from office_sud_kz.auth import iin
 import globals
-import time
 
 def run(browser: Browser)->bool:
     while not isSelectedByLabel(browser, "Вид производства по делу", "2") or not isSelectedByLabel(browser, "Характер заявления", "1") or not isSelectedByLabel(browser, "Категория дела", "22"):
         selectByLabel(browser, "Вид производства по делу", "2")
         browser.wait_for_loader_done()
-        selectByLabel(browser, "Характер заявления", "1")
-        browser.wait_for_loader_done()
         selectByLabel(browser, "Категория дела", "22")
         browser.wait_for_loader_done()
+        selectByLabel(browser, "Характер заявления", "1")
+        browser.wait_for_loader_done()
 
+    browser.refresh()
 # представитель
     while not isModalOpened(browser, 'selectSideModalDialog'):
         clickByText(browser, 'button', 'Добавить участника процесса')
@@ -36,52 +35,45 @@ def run(browser: Browser)->bool:
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
-    while not verifyModalRowValue(browser, divId, 3, iin):
-        textModalByRow(browser, divId, 3, iin)  
+    while not verifyModalRowValue(browser, divId, 3, globals.globalData['iin']):
+        textModalByRow(browser, divId, 3, globals.globalData['iin'])  
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
         browser.wait_for_loader_done()
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
     browser.wait_for_loader_done()
-
+    
+    browser.refresh()
 # истец
     while not isModalOpened(browser, 'selectSideModalDialog'):
         clickByText(browser, 'button', 'Добавить участника процесса')
         browser.wait_for_loader_done()
 
-
     divId = "jurModalDialog"
-    bin = "220440007472"
-    address = "Алматинская область, Илийский р-н, с.о. Асқар Тоқпанов,с. Асқар Тоқпанов, ул. Қ.Байқадамқызы, д. 71, кв. 2"
-    detail = "ИИК: KZ55601A861010717701 Банк: в АО «Народный банк Казахстана» БИК: HSBKKZKX"
     while not isModalOpened(browser, divId):
         while not isSelectedByLabelOnModal(browser, "Тип лица", "true"):
             selectByLabelOnModal(browser, "Тип лица", "true")
             browser.wait_for_loader_done()
 
-
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
+    while not verifyModalRowValue(browser, divId, 4, globals.globalData['bin']) \
+        or not verifyModalRowValue(browser, divId, 7, globals.globalData['address']) \
+        or not verifyModalRowValue(browser, divId, 8, globals.globalData['detail']):
 
-    while not verifyModalRowValue(browser, divId, 4, bin) \
-        or not verifyModalRowValue(browser, divId, 7, address) \
-        or not verifyModalRowValue(browser, divId, 8, detail):
-
-        textModalByRow(browser, divId, 4, bin)
+        textModalByRow(browser, divId, 4, globals.globalData['bin'])
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 4)
         browser.wait_for_loader_done()
-
-        textModalByRow(browser, divId, 7, address)
+        textModalByRow(browser, divId, 7, globals.globalData['address'])
         browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 8, detail)
+        textModalByRow(browser, divId, 8, globals.globalData['detail'])
         browser.wait_for_loader_done()
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
     browser.wait_for_loader_done()
-
 
     browser.refresh()
 # ответчик
@@ -89,9 +81,7 @@ def run(browser: Browser)->bool:
         clickByText(browser, 'button', 'Добавить участника процесса')
         browser.wait_for_loader_done()
 
-
     divId = "fizModalDialog"
-    iin_otvet4ik = '930407300610'
     while not isModalOpened(browser, divId):
         while not isSelectedByLabelOnModal(browser, "Сторона процесса", "2"):
             selectByLabelOnModal(browser, "Сторона процесса", "2")
@@ -100,13 +90,11 @@ def run(browser: Browser)->bool:
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
-
-    while not verifyModalRowValue(browser, divId, 3, iin_otvet4ik):
-        textModalByRow(browser, divId, 3, iin_otvet4ik)
+    while not verifyModalRowValue(browser, divId, 3, globals.globalData['iin_otvet4ik']):
+        textModalByRow(browser, divId, 3, globals.globalData['iin_otvet4ik'])
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
         browser.wait_for_loader_done()
-
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
     browser.wait_for_loader_done()
@@ -496,13 +484,12 @@ def run(browser: Browser)->bool:
         }
     }
 
-    podsudnost = "Бостандыкский районный суд города Алматы"
     for oblast in oblastMap:
         oblastValue = oblastMap[oblast]['value']
         sudValue = None
         sudName = None
         for sud in oblastMap[oblast]['sudebnieOrgany']:
-            if podsudnost in sud:
+            if globals.globalData['podsudnost'] in sud:
                 sudValue = oblastMap[oblast]['sudebnieOrgany'][sud]
                 sudName = sud
                 break

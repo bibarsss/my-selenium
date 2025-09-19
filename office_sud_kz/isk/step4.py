@@ -3,12 +3,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from common.download import downloadByLabel
 from browser.browser import Browser
-import time
-import re
-import os
+import globals
 
 def run(browser: Browser)->bool:
-    downloadByLabel(browser, "Предпросмотр электронного бланка", "as/as", "blank.pdf")
+    downloadByLabel(browser, "Предпросмотр электронного бланка", globals.globalData['dir'], "blank.pdf")
     
     return True
 

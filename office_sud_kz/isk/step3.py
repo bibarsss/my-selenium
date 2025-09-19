@@ -7,20 +7,19 @@ from common.button import clickByText
 from common.input_upload import uploadFile, uploadAllFilesInDirectory
 from common.read_pdf import read
 from browser.browser import Browser
-import time
+import globals
 import re
 import os
 
 def run(browser: Browser)->bool:
-    parsed = parse_claim(read(os.path.abspath("b.pdf")))
+    parsed = parse_claim(read(os.path.abspath(globals.globalData['isk_file_path'])))
     textByLabel(browser, 'Исковые требования', parsed['prosim_block'])
     textByLabel(browser, 'Обстоятельства, на которых основаны требования, и доказательства, подтверждающие эти обстоятельства', parsed['contract_block'])
     browser.wait_for_loader_done()
 
-    uploadFile(browser, "a.pdf", "selectLawsuitScanUploader")
+    uploadFile(browser, globals.globalData['isk_file_path'], "selectLawsuitScanUploader")
     browser.wait_for_loader_done()
-    directory = "arch/Байзакский районный суд Жамбылской области/Иск 1"
-    uploadAllFilesInDirectory(browser, directory, 'selectFileUploader')
+    uploadAllFilesInDirectory(browser, globals.globalData['dir'], 'selectFileUploader')
     browser.wait_for_loader_done()
 
     while not htmlHasText(browser, "Предпросмотр электронного бланка"):

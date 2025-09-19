@@ -14,12 +14,10 @@ def run(browser: Browser)->bool:
         selectByLabel(browser, 'КБК', '2')
         browser.wait_for_loader_done()
 
-    summaIska = 180000
-    powlina = 5812
-    textByLabel(browser, 'Сумма иска', str(summaIska))
-    textByLabel(browser, 'Сумма государственной пошлины (для расчета воспользуйтесь калькулятором, нажав на иконку в поле ввода)', str(powlina))
+    textByLabel(browser, 'Сумма иска', globals.globalData['summaIska'])
+    textByLabel(browser, 'Сумма государственной пошлины (для расчета воспользуйтесь калькулятором, нажав на иконку в поле ввода)', globals.globalData['powlina'])
 
-    uploadFile(browser, 'a.pdf', 'selectPaymentScanUploader1')
+    uploadFile(browser, globals.globalData['powlina_file_path'], 'selectPaymentScanUploader1')
     browser.wait_for_loader_done()
 
     while not htmlHasText(browser, "Данные для электронного бланка"):

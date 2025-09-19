@@ -8,7 +8,6 @@ import globals
 import time
 
 def run(browser: Browser):
-    globals.globalData['iin'] = '111111111'
     browser.safe_get("https://office.sud.kz/")
 
     while not htmlHasText(browser, "Подача документа в судебный орган"):
