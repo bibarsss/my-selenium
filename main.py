@@ -84,7 +84,7 @@ def main():
             "summaIska": str(row[11].value),
             "powlina": str(row[13].value),
             "dir": str(dir),
-            "powlina_file_path": str(dir / "платежное поручение об оплате государственной пошлины.pdf (1)"),
+            "powlina_file_path": str(dir / "платежное поручение об оплате государственной пошлины (1).pdf"),
             "isk_file_path": str(dir / isk_file),
         }
 
