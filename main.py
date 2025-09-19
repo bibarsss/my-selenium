@@ -3,7 +3,6 @@ from office_sud_kz.auth import auth
 from office_sud_kz.isk.main import run as iskRun
 from selenium.webdriver.support.ui import WebDriverWait
 from office_sud_kz.auth import is_authorized
-import os
 import globals
 from openpyxl import load_workbook
 import unicodedata
@@ -85,7 +84,7 @@ def main():
             "summaIska": str(row[11].value),
             "powlina": str(row[13].value),
             "dir": str(dir),
-            "powlina_file_path": str(dir / "платежное поручение об оплате государственной пошлины.pdf"),
+            "powlina_file_path": str(dir / "платежное поручение об оплате государственной пошлины.pdf (1)"),
             "isk_file_path": str(dir / isk_file),
         }
 
