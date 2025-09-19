@@ -7,42 +7,49 @@ from common.input_check import checkboxByTextValue
 from common.input_text import textModalByRow
 from browser.browser import Browser
 from office_sud_kz.auth import iin
+import globals
 import time
 
 def run(browser: Browser)->bool:
-    while not isSelectedByLabel(browser, "Вид производства по делу", "2") or not isSelectedByLabel(browser, "Характер заявления", "1") or not isSelectedByLabel(browser, "Категория дела", "48"):
+    while not isSelectedByLabel(browser, "Вид производства по делу", "2") or not isSelectedByLabel(browser, "Характер заявления", "1") or not isSelectedByLabel(browser, "Категория дела", "22"):
         selectByLabel(browser, "Вид производства по делу", "2")
+        browser.wait_for_loader_done()
         selectByLabel(browser, "Характер заявления", "1")
-        selectByLabel(browser, "Категория дела", "48")
-        time.sleep(1)
+        browser.wait_for_loader_done()
+        selectByLabel(browser, "Категория дела", "22")
+        browser.wait_for_loader_done()
 
 # представитель
     while not isModalOpened(browser, 'selectSideModalDialog'):
         clickByText(browser, 'button', 'Добавить участника процесса')
-        time.sleep(1)
+        browser.wait_for_loader_done()
 
+    browser.wait_for_loader_done()
     divId = "fizModalDialog"
-
+    
     while not isModalOpened(browser, divId):
         while not isSelectedByLabelOnModal(browser, "Сторона процесса", "5"):
             selectByLabelOnModal(browser, "Сторона процесса", "5")
-            time.sleep(1)
+            browser.wait_for_loader_done()
 
+        browser.wait_for_loader_done()
         clickByValue(browser, "Далее")
-        time.sleep(1)
+        browser.wait_for_loader_done()
 
     while not verifyModalRowValue(browser, divId, 3, iin):
-        textModalByRow(browser, divId, 3, iin)
+        textModalByRow(browser, divId, 3, iin)  
+        browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
-        time.sleep(1)
+        browser.wait_for_loader_done()
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
-    time.sleep(3)
+    browser.wait_for_loader_done()
 
 # истец
     while not isModalOpened(browser, 'selectSideModalDialog'):
         clickByText(browser, 'button', 'Добавить участника процесса')
-        time.sleep(1)
+        browser.wait_for_loader_done()
+
 
     divId = "jurModalDialog"
     bin = "220440007472"
@@ -51,50 +58,58 @@ def run(browser: Browser)->bool:
     while not isModalOpened(browser, divId):
         while not isSelectedByLabelOnModal(browser, "Тип лица", "true"):
             selectByLabelOnModal(browser, "Тип лица", "true")
-            time.sleep(1)
+            browser.wait_for_loader_done()
+
 
         clickByValue(browser, "Далее")
-        time.sleep(1)
+        browser.wait_for_loader_done()
+
 
     while not verifyModalRowValue(browser, divId, 4, bin) \
         or not verifyModalRowValue(browser, divId, 7, address) \
         or not verifyModalRowValue(browser, divId, 8, detail):
 
         textModalByRow(browser, divId, 4, bin)
+        browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 4)
-        time.sleep(1)
+        browser.wait_for_loader_done()
+
         textModalByRow(browser, divId, 7, address)
+        browser.wait_for_loader_done()
         textModalByRow(browser, divId, 8, detail)
+        browser.wait_for_loader_done()
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
-    time.sleep(3)
+    browser.wait_for_loader_done()
+
 
     browser.refresh()
 # ответчик
-    print('otvet4ik start')
     while not isModalOpened(browser, 'selectSideModalDialog'):
         clickByText(browser, 'button', 'Добавить участника процесса')
-        time.sleep(1)
+        browser.wait_for_loader_done()
+
 
     divId = "fizModalDialog"
     iin_otvet4ik = '930407300610'
     while not isModalOpened(browser, divId):
-        print('modal not opened 1')
         while not isSelectedByLabelOnModal(browser, "Сторона процесса", "2"):
             selectByLabelOnModal(browser, "Сторона процесса", "2")
-            time.sleep(1)
+            browser.wait_for_loader_done()
+
         clickByValue(browser, "Далее")
-        time.sleep(1)
+        browser.wait_for_loader_done()
+
 
     while not verifyModalRowValue(browser, divId, 3, iin_otvet4ik):
-        print('modal not opened 2')
         textModalByRow(browser, divId, 3, iin_otvet4ik)
+        browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
-        time.sleep(1)
+        browser.wait_for_loader_done()
+
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
-    time.sleep(3)
-    print('otvet4ik end')
+    browser.wait_for_loader_done()
 
     oblastMap = {
         "город Астана": {
@@ -499,15 +514,21 @@ def run(browser: Browser)->bool:
     
     while not isSelectedByLabel(browser, "Область (столица, город республиканского значения)", oblastValue) or not isSelectedByLabel(browser, "Судебный орган", sudValue):
         selectByLabel(browser, "Область (столица, город республиканского значения)", oblastValue)
+        browser.wait_for_loader_done()
         if not htmlHasText(browser, sudName):
             continue
-        time.sleep(1)
+        browser.wait_for_loader_done()
+
         selectByLabel(browser, "Судебный орган", sudValue)
+        browser.wait_for_loader_done()
+
 
     checkboxByTextValue(browser, "Дело упрощенного производства", True)
+    browser.wait_for_loader_done()
+
     while not htmlHasText(browser, "Информация об оплате"):
-            clickByText(browser, 'a' ,'Далее')
-            time.sleep(1)
+        clickByText(browser, 'a' ,'Далее')
+        browser.wait_for_loader_done()
 
     return True
 

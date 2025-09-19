@@ -9,44 +9,44 @@ from common.input_text import textByPlaceholder, textIsSetByPlaceholder
 from common.button import clickByValue, clickByIndex
 from browser.browser import Browser
 
+import globals
 import time
 
-iin = "010213500250"
-password = "Utepov2025!@#"
-
-def auth(browser: Browser)->bool:
-    browser.safe_get("https://office.sud.kz/")
-
-    
+def auth(browser: Browser):
+    print('Открываем файл auth.txt...')
+    try:
+        with open("auth.txt", "r", encoding="utf-8") as f:
+            lines = [line.strip() for line in f if line.strip()]
+        iin, password = lines 
+        globals.authData['iin'] = iin
+        globals.authData['password'] = password
+    except Exception as e:
+        print("Файл auth.txt не найден или логин/пароль не указан!")
+        return
 
     while not is_rus_selected(browser):
         clickByIndex(browser, "div.lang a", 1)
+        browser.wait_for_loader_done()
         time.sleep(1)
 
-    while not textIsSetByPlaceholder(browser, "ИИН/БИН", iin) and not textByPlaceholder(browser, "Пароль", password):
-        textByPlaceholder(browser, "ИИН/БИН", iin)
-        textByPlaceholder(browser, "Пароль", password)
-        time.sleep(1)
+    while not textIsSetByPlaceholder(browser, "ИИН/БИН", globals.authData['iin']) and not textByPlaceholder(browser, "Пароль", globals.authData['password']):
+        textByPlaceholder(browser, "ИИН/БИН", globals.authData['iin'])
+        textByPlaceholder(browser, "Пароль", globals.authData['password'])
+        browser.wait_for_loader_done()
 
     clickByValue(browser, 'Войти')
-
-    return is_authorized(browser)
+    browser.wait_for_loader_done()
 
 def is_authorized(browser: Browser) -> bool:
     try:
-        browser.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.profile")))
+        WebDriverWait(browser.driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.profile")))
         return True
     except TimeoutException:
         return False
 
 def is_rus_selected(browser: Browser):
     try:
-        rus_element = WebDriverWait(browser.driver, 1).until(
-            EC.presence_of_element_located((
-                By.XPATH,
-                '//div[@class="lang flex flex-center"]//a[text()="РУС"]'
-            ))
-        )
+        rus_element = WebDriverWait(browser.driver, 1).until(EC.presence_of_element_located((By.XPATH,'//div[@class="lang flex flex-center"]//a[text()="РУС"]')))
         return 'active' in rus_element.get_attribute('class')
     except:
         return False

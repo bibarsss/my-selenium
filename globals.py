@@ -1,0 +1,2 @@
+globalData = {}
+authData = {}

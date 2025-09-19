@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from common.input_select import selectByLabel, isSelectedByLabel
 from common.input_text import textByLabel
 from common.button import clickByText
-from common.input_upload import uploadFile
+from common.input_upload import uploadFile, uploadAllFilesInDirectory
 from common.read_pdf import read
 from browser.browser import Browser
 import time
@@ -15,6 +15,17 @@ def run(browser: Browser)->bool:
     parsed = parse_claim(read(os.path.abspath("b.pdf")))
     textByLabel(browser, 'Исковые требования', parsed['prosim_block'])
     textByLabel(browser, 'Обстоятельства, на которых основаны требования, и доказательства, подтверждающие эти обстоятельства', parsed['contract_block'])
+    browser.wait_for_loader_done()
+
+    uploadFile(browser, "a.pdf", "selectLawsuitScanUploader")
+    browser.wait_for_loader_done()
+    directory = "arch/Байзакский районный суд Жамбылской области/Иск 1"
+    uploadAllFilesInDirectory(browser, directory, 'selectFileUploader')
+    browser.wait_for_loader_done()
+
+    while not htmlHasText(browser, "Предпросмотр электронного бланка"):
+        clickByText(browser, 'a' ,'Далее')
+        browser.wait_for_loader_done()
 
     return True
 
@@ -24,7 +35,7 @@ def htmlHasText(browser: Browser, text: str) -> bool:
         return True
     except:
         return False
-    
+
 def parse_claim(text: str):
     result = {}
 

@@ -6,13 +6,13 @@ from common.input_text import textByLabel
 from common.button import clickByText
 from common.input_upload import uploadFile
 from browser.browser import Browser
+import globals
 import time
 
 def run(browser: Browser)->bool:
-    # return True
     while not isSelectedByLabel(browser, 'КБК', '2'):
         selectByLabel(browser, 'КБК', '2')
-        time.sleep(1)
+        browser.wait_for_loader_done()
 
     summaIska = 180000
     powlina = 5812
@@ -20,10 +20,11 @@ def run(browser: Browser)->bool:
     textByLabel(browser, 'Сумма государственной пошлины (для расчета воспользуйтесь калькулятором, нажав на иконку в поле ввода)', str(powlina))
 
     uploadFile(browser, 'a.pdf', 'selectPaymentScanUploader1')
+    browser.wait_for_loader_done()
 
     while not htmlHasText(browser, "Данные для электронного бланка"):
-            clickByText(browser, 'a' ,'Далее')
-            time.sleep(1)
+        clickByText(browser, 'a' ,'Далее')
+        browser.wait_for_loader_done()
 
     return True
 

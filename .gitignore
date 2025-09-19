@@ -2,3 +2,6 @@ __pycache__
 .venv
 /arch
 *.pdf
+.vscode
+auth.txt
+.DS_Store
