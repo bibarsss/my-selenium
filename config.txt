@@ -1,4 +1,15 @@
 iin=010213500250
 password=Utepov2025!@#
+phone=7711319034
+bin=220440007472
+address=Алматинская область, Илийский р-н, с.о. Асқар Тоқпанов,с. Асқар Тоқпанов, ул. Қ.Байқадамқызы, д. 71, кв. 2
+detail=ИИК: KZ55601A861010717701 Банк: в АО «Народный банк Казахстана» БИК: HSBKKZKX
 isk_file_name=Иск (1).pdf
 isk_powlina_file_name=платежное поручение об оплате государственной пошлины (1).pdf
+isk_excel_number=4
+isk_excel_file_name=1
+isk_excel_podsudnost=8
+isk_excel_iin_otvet4ik=3
+isk_excel_summa_iska=18
+isk_excel_powlina=17
+isk_excel_phone_otvet4ik=14

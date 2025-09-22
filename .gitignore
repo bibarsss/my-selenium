@@ -6,4 +6,4 @@ __pycache__
 auth.txt
 .DS_Store
 arch.zip
-sud.xlsx
+*.xlsx

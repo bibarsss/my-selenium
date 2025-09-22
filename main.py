@@ -39,23 +39,17 @@ def main():
     print('Успешно!')
     
     print("Открываем файл sud.xlsx...")
-    file_path = "sud.xlsx"
+    file_path = "600.xlsx"
     wb = load_workbook(file_path)
     sheet = wb.active
 
-    # iin = ''
-    iin = globals.cfg['iin']
-    bin = "220440007472"
-    address = "Алматинская область, Илийский р-н, с.о. Асқар Тоқпанов,с. Асқар Тоқпанов, ул. Қ.Байқадамқызы, д. 71, кв. 2"
-    detail = "ИИК: KZ55601A861010717701 Банк: в АО «Народный банк Казахстана» БИК: HSBKKZKX"
-
     for i, row in enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2):
-        number = str(row[0].value)
-        isk_file = str(row[1].value) + ".pdf"
+        number = str(row[globals.index('isk_excel_number')].value)
+        isk_file = str(row[globals.index('isk_excel_file_name')].value) + ".pdf"
         dir = None
 
         print("Строка " + str(i) + " -> " + number)
-        if len(row) > 21 and str(row[20].value) == 'success':
+        if len(row) > 21 and str(row[22].value) == 'success':
             print("[Пропуск] Уже успешно!")
             continue
 
@@ -67,44 +61,46 @@ def main():
         if not dir:
             print("[Пропуск] Папка с иском на договор [" + number + "] не найдена!")
 
-            col21_val = sheet.cell(row=i, column=21).value
-            col22_val = sheet.cell(row=i, column=22).value
+            col21_val = sheet.cell(row=i, column=23).value
+            col22_val = sheet.cell(row=i, column=24).value
 
             if col21_val is None and col22_val is None:
-                sheet.cell(row=i, column=21, value="error")
-                sheet.cell(row=i, column=22, value="-")
+                sheet.cell(row=i, column=23, value="error")
+                sheet.cell(row=i, column=24, value="-")
                 wb.save(file_path)
 
             continue
 
-        sheet.cell(row=i, column=21, value="process")
-        sheet.cell(row=i, column=22, value=str(dir))
+        sheet.cell(row=i, column=23, value="process")
+        sheet.cell(row=i, column=24, value=str(dir))
 
         globals.globalData = {
-            "iin": iin,
-            "bin": bin,
-            "address": address,
-            "detail": detail,
-            "podsudnost": str(row[3].value),
+            "iin": globals.cfg['iin'],
+            "bin": globals.cfg['bin'],
+            "phone": globals.cfg['phone'],
+            "phone_otvet4ik": str(row[globals.index("isk_excel_phone_otvet4ik")].value),
+            "address": globals.cfg['address'],
+            "detail": globals.cfg['detail'],
+            "podsudnost": str(row[globals.index('isk_excel_podsudnost')].value),
             "number": number,
-            "iin_otvet4ik": str(row[6].value).zfill(12),
-            "summaIska": str(row[11].value),
-            "powlina": str(row[13].value),
+            "iin_otvet4ik": str(row[globals.index('isk_excel_iin_otvet4ik')].value).zfill(12),
+            "summaIska": str(row[globals.index('isk_excel_summa_iska')].value),
+            "powlina": str(row[globals.index('isk_excel_powlina')].value),
             "dir": str(dir),
             "powlina_file_path": str(dir / globals.cfg['isk_powlina_file_name']),
             "isk_file_path": str(dir / globals.cfg['isk_file_name']),
-            "isk_file_realpath": str(dir / isk_file)
+            "isk_file_realpath": str(dir / isk_file),
         }
 
         try:
-            print(str(dir))
+            print(dir)
             iskRun(browser)
-            sheet.cell(row=i, column=21, value="success")
+            sheet.cell(row=i, column=23, value="success")
             wb.save(file_path)
 
         except Exception as e:
             print("Ошибка:", e)
-            sheet.cell(row=i, column=21, value="exception")
+            sheet.cell(row=i, column=23, value="exception")
             wb.save(file_path)
 
     input("Готово. Для выхода нажмите на Enter.")

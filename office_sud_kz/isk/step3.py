@@ -17,6 +17,8 @@ def run(browser: Browser)->bool:
     isk_file_real = Path(globals.globalData['isk_file_realpath'])
 
     if not isk_file_real.exists():
+        if not isk_file_common.exists():
+            raise Exception("File not found! " + globals.globalData['isk_file_path'])
         isk_file_common.rename(isk_file_real)
 
     parsed = parse_claim(read(os.path.abspath(globals.globalData['isk_file_realpath'])))

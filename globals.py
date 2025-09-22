@@ -10,3 +10,6 @@ def read_config(file_path):
             if "=" in line:
                 key, value = line.split("=", 1)
                 cfg[key.strip()] = value.strip()
+
+def index(key: str)->int:
+    return int(cfg[key]) - 1
