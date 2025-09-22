@@ -8,7 +8,9 @@ import globals
 import time
 
 def run(browser: Browser):
+    browser.wait_for_loader_done()
     browser.safe_get("https://office.sud.kz/")
+    browser.wait_for_loader_done()
 
     while not htmlHasText(browser, "Подача документа в судебный орган"):
         browser.wait_for_loader_done()
