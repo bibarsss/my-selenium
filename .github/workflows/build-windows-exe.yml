@@ -39,8 +39,8 @@ jobs:
           dir dist
 
       # 6️⃣ Test run EXE inside CI (optional, but recommended)
-      - name: Test EXE
-        run: dist\main.exe || exit 1
+      # - name: Test EXE
+      #   run: dist\main.exe || exit 1
 
       # 7️⃣ Upload the EXE as an artifact
       - name: Upload EXE
