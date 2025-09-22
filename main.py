@@ -106,8 +106,6 @@ def main():
             print("Ошибка:", e)
             sheet.cell(row=i, column=21, value="exception")
             wb.save(file_path)
-        
-        break
 
     input("Готово. Для выхода нажмите на Enter.")
     browser.driver.quit()
