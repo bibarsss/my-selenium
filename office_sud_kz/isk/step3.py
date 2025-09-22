@@ -10,14 +10,22 @@ from browser.browser import Browser
 import globals
 import re
 import os
+from pathlib import Path
 
 def run(browser: Browser)->bool:
-    parsed = parse_claim(read(os.path.abspath(globals.globalData['isk_file_path'])))
+    isk_file_common = Path(globals.globalData['isk_file_path'])
+    isk_file_real = Path(globals.globalData['isk_file_realpath'])
+
+    if not isk_file_real.exists():
+        isk_file_common.rename(isk_file_real)
+
+    parsed = parse_claim(read(os.path.abspath(globals.globalData['isk_file_realpath'])))
+
     textByLabel(browser, 'Исковые требования', parsed['prosim_block'])
     textByLabel(browser, 'Обстоятельства, на которых основаны требования, и доказательства, подтверждающие эти обстоятельства', parsed['contract_block'])
     browser.wait_for_loader_done()
 
-    uploadFile(browser, globals.globalData['isk_file_path'], "selectLawsuitScanUploader")
+    uploadFile(browser, globals.globalData['isk_file_realpath'], "selectLawsuitScanUploader")
     browser.wait_for_loader_done()
     uploadAllFilesInDirectory(browser, globals.globalData['dir'], 'selectFileUploader')
     browser.wait_for_loader_done()

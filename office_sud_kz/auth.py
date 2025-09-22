@@ -13,15 +13,11 @@ import globals
 import time
 
 def auth(browser: Browser):
-    print('Открываем файл auth.txt...')
+    print('Открываем файл config.txt...')
     try:
-        with open("auth.txt", "r", encoding="utf-8") as f:
-            lines = [line.strip() for line in f if line.strip()]
-        iin, password = lines 
-        globals.authData['iin'] = iin
-        globals.authData['password'] = password
+        globals.read_config("config.txt")
     except Exception as e:
-        print("Файл auth.txt не найден или логин/пароль не указан!")
+        print("Файл config.txt не найден или логин/пароль не указан!")
         return
 
     while not is_rus_selected(browser):
@@ -29,9 +25,9 @@ def auth(browser: Browser):
         browser.wait_for_loader_done()
         time.sleep(1)
 
-    while not textIsSetByPlaceholder(browser, "ИИН/БИН", globals.authData['iin']) and not textByPlaceholder(browser, "Пароль", globals.authData['password']):
-        textByPlaceholder(browser, "ИИН/БИН", globals.authData['iin'])
-        textByPlaceholder(browser, "Пароль", globals.authData['password'])
+    while not textIsSetByPlaceholder(browser, "ИИН/БИН", globals.cfg['iin']) and not textByPlaceholder(browser, "Пароль", globals.cfg['password']):
+        textByPlaceholder(browser, "ИИН/БИН", globals.cfg['iin'])
+        textByPlaceholder(browser, "Пароль", globals.cfg['password'])
         browser.wait_for_loader_done()
 
     clickByValue(browser, 'Войти')

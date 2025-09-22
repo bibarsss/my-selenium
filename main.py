@@ -8,8 +8,9 @@ from openpyxl import load_workbook
 import unicodedata
 from pathlib import Path
 
-import sys, io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+# import sys, io
+# sys.stdout.reconfigure(line_buffering=True)
+# sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 
 def main():
@@ -37,7 +38,7 @@ def main():
     sheet = wb.active
 
     # iin = ''
-    iin = globals.authData['iin']
+    iin = globals.cfg['iin']
     bin = "220440007472"
     address = "Алматинская область, Илийский р-н, с.о. Асқар Тоқпанов,с. Асқар Тоқпанов, ул. Қ.Байқадамқызы, д. 71, кв. 2"
     detail = "ИИК: KZ55601A861010717701 Банк: в АО «Народный банк Казахстана» БИК: HSBKKZKX"
@@ -52,13 +53,13 @@ def main():
             print("[Пропуск] Уже успешно!")
             continue
 
-        for path in Path(".").rglob("*"):
-            if unicodedata.normalize("NFC", path.name) == isk_file:
+        for path in Path(".").rglob("*.pdf"):
+            if number in unicodedata.normalize("NFC", path.name):
                 dir = path.parent
                 break
-
+        
         if not dir:
-            print("[Пропуск] Папка с иском не найдена!")
+            print("[Пропуск] Папка с иском на договор [" + number + "] не найдена!")
 
             col21_val = sheet.cell(row=i, column=21).value
             col22_val = sheet.cell(row=i, column=22).value
@@ -84,8 +85,9 @@ def main():
             "summaIska": str(row[11].value),
             "powlina": str(row[13].value),
             "dir": str(dir),
-            "powlina_file_path": str(dir / "платежное поручение об оплате государственной пошлины (1).pdf"),
-            "isk_file_path": str(dir / isk_file),
+            "powlina_file_path": str(dir / globals.cfg['isk_powlina_file_name']),
+            "isk_file_path": str(dir / globals.cfg['isk_file_name']),
+            "isk_file_realpath": str(dir / isk_file)
         }
 
         try:
@@ -98,6 +100,8 @@ def main():
             print("Ошибка:", e)
             sheet.cell(row=i, column=21, value="exception")
             wb.save(file_path)
+        
+        break
 
     input("Готово. Для выхода нажмите на Enter.")
     browser.driver.quit()

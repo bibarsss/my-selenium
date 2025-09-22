@@ -1,0 +1,5 @@
+iin=010213500250
+password=Utepov2025!@#
+isk_file_name=Иск (1).pdf
+isk_powlina_file_name=платежное поручение об оплате государственной пошлины (1).pdf
+
