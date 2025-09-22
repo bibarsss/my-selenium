@@ -8,7 +8,13 @@ from openpyxl import load_workbook
 import unicodedata
 from pathlib import Path
 
-# import sys, io
+import sys, io
+
+sys.stdout = io.TextIOWrapper(
+    sys.stdout.buffer, 
+    encoding="utf-8", 
+    line_buffering=True
+)
 # sys.stdout.reconfigure(line_buffering=True)
 # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 

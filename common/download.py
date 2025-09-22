@@ -3,7 +3,6 @@ import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-import certifi
 
 def downloadByLabel(browser, link_text: str, download_dir: str, filename: str = None) -> str:
     os.makedirs(download_dir, exist_ok=True)
