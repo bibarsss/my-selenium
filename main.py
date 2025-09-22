@@ -44,6 +44,9 @@ def main():
     sheet = wb.active
 
     for i, row in enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2):
+        if i % 5 == 0: 
+            browser.refresh()
+
         number = str(row[globals.index('isk_excel_number')].value)
         isk_file = str(row[globals.index('isk_excel_file_name')].value) + ".pdf"
         dir = None
