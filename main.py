@@ -39,7 +39,7 @@ def main():
     print('Успешно!')
     
     print("Открываем файл sud.xlsx...")
-    file_path = "600.xlsx"
+    file_path = globals.cfg['file']
     wb = load_workbook(file_path)
     sheet = wb.active
 
