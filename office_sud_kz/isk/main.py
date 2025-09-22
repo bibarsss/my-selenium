@@ -22,7 +22,7 @@ def run(browser: Browser):
 
     print('step 1')
     step1.run(browser)
-    return
+    
     print('step 2')
     step2.run(browser)
 
