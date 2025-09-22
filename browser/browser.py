@@ -9,9 +9,9 @@ import time
 class Browser:
     def __init__(self):
         options = Options()
-        # options.add_argument("--headless")       # Run without GUI
-        # options.add_argument("--disable-gpu")    # Recommended for headless
-        # options.add_argument("--disable-dev-shm-usage")  # Fixes some crashes
+        options.add_argument("--headless")       # Run without GUI
+        options.add_argument("--disable-gpu")    # Recommended for headless
+        options.add_argument("--disable-dev-shm-usage")  # Fixes some crashes
         options.page_load_strategy = "normal"
 
         self.driver = webdriver.Chrome(options=options)
