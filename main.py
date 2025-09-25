@@ -1,84 +1,116 @@
-from multiprocessing import Pool, cpu_count
-from pathlib import Path
-from openpyxl import load_workbook
-import globals
-import unicodedata
+# from multiprocessing import Pool, cpu_count
+# from pathlib import Path
+# from openpyxl import load_workbook
+# import globals
+# import unicodedata
 
-def process_rows(rows):
-    from browser.browser import Browser
-    from office_sud_kz.auth import auth, is_authorized
-    from office_sud_kz.isk.main import run as iskRun
+# def process_rows(rows):
+#     from browser.browser import Browser
+#     from office_sud_kz.auth import auth, is_authorized
+#     from office_sud_kz.isk.main import run as iskRun
 
+#     browser = Browser()
+#     browser.safe_get("https://office.sud.kz/")
+#     auth(browser)
+
+#     if not is_authorized(browser):
+#         print("Не авторизован!")
+#         browser.driver.quit()
+#         return
+
+#     for i, row in rows:
+#         number = str(row[globals.index('isk_excel_number')].value)
+#         print(f"[PID] {i} -> {number}")
+
+#         dir = None
+#         for path in Path(".").rglob("*.pdf"):
+#             if number in unicodedata.normalize("NFC", path.name):
+#                 dir = path.parent
+#                 break
+
+#         if not dir:
+#             print(f"[PID] {i} -> папка не найдена")
+#             continue
+
+#         globals.globalData = {
+#             "iin": globals.cfg['iin'],
+#             "bin": globals.cfg['bin'],
+#             "phone": globals.cfg['phone'],
+#             "phone_otvet4ik": str(row[globals.index("isk_excel_phone_otvet4ik")].value),
+#             "address": globals.cfg['address'],
+#             "detail": globals.cfg['detail'],
+#             "podsudnost": str(row[globals.index('isk_excel_podsudnost')].value),
+#             "number": number,
+#             "iin_otvet4ik": str(row[globals.index('isk_excel_iin_otvet4ik')].value).zfill(12),
+#             "summaIska": str(row[globals.index('isk_excel_summa_iska')].value),
+#             "powlina": str(row[globals.index('isk_excel_powlina')].value),
+#             "dir": str(dir),
+#             "powlina_file_path": str(dir / globals.cfg['isk_powlina_file_name']),
+#             "isk_file_path": str(dir / globals.cfg['isk_file_name']),
+#             "isk_file_realpath": str(dir / (str(row[globals.index('isk_excel_file_name')].value) + ".pdf")),
+#         }
+
+#         try:
+#             iskRun(browser)
+#             print(f"[PID] {i} -> success")
+#         except Exception as e:
+#             print(f"[PID] {i} -> exception {e}")
+
+#     browser.driver.quit()
+
+# def main():
+#     print('Открываем файл config.txt...')
+#     try:
+#         cfg = globals.read_config("config.txt")
+#         print('Конфигурация загружена!')
+#     except Exception as e:
+#         print("Файл config.txt не найден или логин/пароль не указан!")
+#         return
+    
+#     print(globals.cfg)
+
+#     wb = load_workbook(globals.cfg['file'])
+#     sheet = wb.active
+#     rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
+
+#     n_workers = 5
+#     chunk_size = len(rows) // n_workers + 1
+#     chunks = [rows[i:i + chunk_size] for i in range(0, len(rows), chunk_size)]
+
+#     with Pool(processes=n_workers) as pool:
+#         pool.map(process_rows, chunks)
+
+# if __name__ == "__main__":
+#     main()
+
+from multiprocessing import Pool
+from browser.browser import Browser  # your Browser wrapper
+import time
+
+
+def open_site(worker_id: int):
+    """Function executed in each process"""
+    print(f"[Worker {worker_id}] starting browser...")
     browser = Browser()
-    browser.safe_get("https://office.sud.kz/")
-    auth(browser)
 
-    if not is_authorized(browser):
-        print("Не авторизован!")
-        browser.driver.quit()
-        return
+    try:
+        browser.safe_get("https://office.sud.kz/")
+        print(f"[Worker {worker_id}] site opened successfully!")
 
-    for i, row in rows:
-        number = str(row[globals.index('isk_excel_number')].value)
-        print(f"[PID] {i} -> {number}")
+        # Keep the browser open forever
+        while True:
+            time.sleep(1)
 
-        dir = None
-        for path in Path(".").rglob("*.pdf"):
-            if number in unicodedata.normalize("NFC", path.name):
-                dir = path.parent
-                break
+    except Exception as e:
+        print(f"[Worker {worker_id}] error: {e}")
+        # don't quit browser, just print error
 
-        if not dir:
-            print(f"[PID] {i} -> папка не найдена")
-            continue
-
-        globals.globalData = {
-            "iin": globals.cfg['iin'],
-            "bin": globals.cfg['bin'],
-            "phone": globals.cfg['phone'],
-            "phone_otvet4ik": str(row[globals.index("isk_excel_phone_otvet4ik")].value),
-            "address": globals.cfg['address'],
-            "detail": globals.cfg['detail'],
-            "podsudnost": str(row[globals.index('isk_excel_podsudnost')].value),
-            "number": number,
-            "iin_otvet4ik": str(row[globals.index('isk_excel_iin_otvet4ik')].value).zfill(12),
-            "summaIska": str(row[globals.index('isk_excel_summa_iska')].value),
-            "powlina": str(row[globals.index('isk_excel_powlina')].value),
-            "dir": str(dir),
-            "powlina_file_path": str(dir / globals.cfg['isk_powlina_file_name']),
-            "isk_file_path": str(dir / globals.cfg['isk_file_name']),
-            "isk_file_realpath": str(dir / (str(row[globals.index('isk_excel_file_name')].value) + ".pdf")),
-        }
-
-        try:
-            iskRun(browser)
-            print(f"[PID] {i} -> success")
-        except Exception as e:
-            print(f"[PID] {i} -> exception {e}")
-
-    browser.driver.quit()
 
 def main():
-    print('Открываем файл config.txt...')
-    try:
-        cfg = globals.read_config("config.txt")
-        print('Конфигурация загружена!')
-    except Exception as e:
-        print("Файл config.txt не найден или логин/пароль не указан!")
-        return
-    
-    print(globals.cfg)
-
-    wb = load_workbook(globals.cfg['file'])
-    sheet = wb.active
-    rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
-
-    n_workers = 5
-    chunk_size = len(rows) // n_workers + 1
-    chunks = [rows[i:i + chunk_size] for i in range(0, len(rows), chunk_size)]
-
+    n_workers = 30  # number of parallel browsers to run
     with Pool(processes=n_workers) as pool:
-        pool.map(process_rows, chunks)
+        pool.map(open_site, range(n_workers))
+
 
 if __name__ == "__main__":
     main()
