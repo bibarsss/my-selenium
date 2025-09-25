@@ -5,7 +5,6 @@ from openpyxl import load_workbook
 import globals
 import unicodedata
 
-
 def process_rows(rows, worker_id):
     from browser.browser import Browser
     from office_sud_kz.auth import auth, is_authorized
@@ -21,6 +20,10 @@ def process_rows(rows, worker_id):
         browser.driver.quit()
         return
 
+    # Open workbook inside each worker
+    wb = load_workbook(globals.cfg['file'])
+    sheet = wb.active
+
     for i, row in rows:
         number = str(row[globals.index('isk_excel_number')].value)
         print(f"[Worker {worker_id}] {i} -> {number}")
@@ -33,6 +36,7 @@ def process_rows(rows, worker_id):
 
         if not dir:
             print(f"[Worker {worker_id}] {i} -> папка не найдена")
+            sheet.cell(row=i, column=20, value="папка не найдена")  # mark in Excel
             continue
 
         globals.globalData = {
@@ -56,10 +60,16 @@ def process_rows(rows, worker_id):
         try:
             iskRun(browser)
             print(f"[Worker {worker_id}] {i} -> success")
+            sheet.cell(row=i, column=20, value="success")  # mark in Excel
         except Exception as e:
             print(f"[Worker {worker_id}] {i} -> exception {e}")
+            sheet.cell(row=i, column=20, value=f"error: {e}")
 
-    # leave browser open OR quit when finished
+    # Save workbook per worker
+    out_file = f"output_worker_{worker_id}.xlsx"
+    wb.save(out_file)
+    print(f"[Worker {worker_id}] saved results to {out_file}")
+
     browser.driver.quit()
 
 
