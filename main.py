@@ -83,8 +83,9 @@
 # if __name__ == "__main__":
 #     main()
 
+import multiprocessing
 from multiprocessing import Process
-from browser.browser import Browser  # your Browser wrapper
+from browser.browser import Browser
 import time
 
 
@@ -96,17 +97,15 @@ def open_site(worker_id: int):
         browser.safe_get("https://office.sud.kz/")
         print(f"[Worker {worker_id}] site opened successfully!")
 
-        # Keep the browser open forever
         while True:
             time.sleep(1)
 
     except Exception as e:
         print(f"[Worker {worker_id}] error: {e}")
-        # don't quit browser, just print error
 
 
 def main():
-    n_workers = 3
+    n_workers = 5
     processes = []
 
     for i in range(n_workers):
@@ -114,10 +113,10 @@ def main():
         p.start()
         processes.append(p)
 
-    # optional: wait for all
     for p in processes:
         p.join()
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()  # <-- REQUIRED for PyInstaller
     main()

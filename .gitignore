@@ -9,3 +9,4 @@ arch.zip
 *.xlsx
 config.txt
 podsudnost.txt
+/build/
