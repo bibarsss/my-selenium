@@ -15,9 +15,6 @@ sys.stdout = io.TextIOWrapper(
     encoding="utf-8", 
     line_buffering=True
 )
-# sys.stdout.reconfigure(line_buffering=True)
-# sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
 
 def main():
     browser = Browser()
@@ -37,8 +34,8 @@ def main():
         browser.driver.quit()
         return
     print('Успешно!')
-    
-    print("Открываем файл sud.xlsx...")
+   
+    print("Открываем файл " + globals.cfg['file'] + "...")
     file_path = globals.cfg['file']
     wb = load_workbook(file_path)
     sheet = wb.active
