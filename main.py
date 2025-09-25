@@ -83,13 +83,12 @@
 # if __name__ == "__main__":
 #     main()
 
-from multiprocessing import Pool
+from multiprocessing import Process
 from browser.browser import Browser  # your Browser wrapper
 import time
 
 
 def open_site(worker_id: int):
-    """Function executed in each process"""
     print(f"[Worker {worker_id}] starting browser...")
     browser = Browser()
 
@@ -107,9 +106,17 @@ def open_site(worker_id: int):
 
 
 def main():
-    n_workers = 30  # number of parallel browsers to run
-    with Pool(processes=n_workers) as pool:
-        pool.map(open_site, range(n_workers))
+    n_workers = 3
+    processes = []
+
+    for i in range(n_workers):
+        p = Process(target=open_site, args=(i,))
+        p.start()
+        processes.append(p)
+
+    # optional: wait for all
+    for p in processes:
+        p.join()
 
 
 if __name__ == "__main__":
