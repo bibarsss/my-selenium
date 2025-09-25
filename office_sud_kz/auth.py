@@ -13,17 +13,12 @@ import globals
 import time
 
 def auth(browser: Browser):
-    print('Открываем файл config.txt...')
-    try:
-        globals.read_config("config.txt")
-    except Exception as e:
-        print("Файл config.txt не найден или логин/пароль не указан!")
-        return
-
     while not is_rus_selected(browser):
         clickByIndex(browser, "div.lang a", 1)
         browser.wait_for_loader_done()
         time.sleep(1)
+
+    print(globals.cfg)
 
     while not textIsSetByPlaceholder(browser, "ИИН/БИН", globals.cfg['iin']) and not textByPlaceholder(browser, "Пароль", globals.cfg['password']):
         textByPlaceholder(browser, "ИИН/БИН", globals.cfg['iin'])

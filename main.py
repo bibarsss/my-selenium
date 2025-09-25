@@ -1,78 +1,36 @@
-from browser.browser import Browser
-from office_sud_kz.auth import auth
-from office_sud_kz.isk.main import run as iskRun
-from selenium.webdriver.support.ui import WebDriverWait
-from office_sud_kz.auth import is_authorized
-import globals
-from openpyxl import load_workbook
-import unicodedata
+from multiprocessing import Pool, cpu_count
 from pathlib import Path
+from openpyxl import load_workbook
+import globals
+import unicodedata
 
-import sys, io
+def process_rows(rows):
+    from browser.browser import Browser
+    from office_sud_kz.auth import auth, is_authorized
+    from office_sud_kz.isk.main import run as iskRun
 
-sys.stdout = io.TextIOWrapper(
-    sys.stdout.buffer, 
-    encoding="utf-8", 
-    line_buffering=True
-)
-
-def main():
     browser = Browser()
-    print('Заходим в "office.sud.kz"...')
     browser.safe_get("https://office.sud.kz/")
-
-    print('Авторизация...')
-    try:
-        auth(browser)
-    except Exception as e:
-        print("Ошибка авторизации!", e)
-        browser.driver.quit()
-        return
+    auth(browser)
 
     if not is_authorized(browser):
         print("Не авторизован!")
         browser.driver.quit()
         return
-    print('Успешно!')
-   
-    print("Открываем файл " + globals.cfg['file'] + "...")
-    file_path = globals.cfg['file']
-    wb = load_workbook(file_path)
-    sheet = wb.active
 
-    for i, row in enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2):
-        if i % 5 == 0: 
-            browser.refresh()
-
+    for i, row in rows:
         number = str(row[globals.index('isk_excel_number')].value)
-        isk_file = str(row[globals.index('isk_excel_file_name')].value) + ".pdf"
+        print(f"[PID] {i} -> {number}")
+
         dir = None
-
-        print("Строка " + str(i) + " -> " + number)
-        if len(row) > 21 and str(row[22].value) == 'success':
-            print("[Пропуск] Уже успешно!")
-            continue
-
         for path in Path(".").rglob("*.pdf"):
             if number in unicodedata.normalize("NFC", path.name):
                 dir = path.parent
                 break
-        
+
         if not dir:
-            print("[Пропуск] Папка с иском на договор [" + number + "] не найдена!")
-
-            col21_val = sheet.cell(row=i, column=23).value
-            col22_val = sheet.cell(row=i, column=24).value
-
-            if col21_val is None and col22_val is None:
-                sheet.cell(row=i, column=23, value="error")
-                sheet.cell(row=i, column=24, value="-")
-                wb.save(file_path)
-
+            print(f"[PID] {i} -> папка не найдена")
             continue
-
-        sheet.cell(row=i, column=23, value="process")
-        sheet.cell(row=i, column=24, value=str(dir))
 
         globals.globalData = {
             "iin": globals.cfg['iin'],
@@ -89,22 +47,38 @@ def main():
             "dir": str(dir),
             "powlina_file_path": str(dir / globals.cfg['isk_powlina_file_name']),
             "isk_file_path": str(dir / globals.cfg['isk_file_name']),
-            "isk_file_realpath": str(dir / isk_file),
+            "isk_file_realpath": str(dir / (str(row[globals.index('isk_excel_file_name')].value) + ".pdf")),
         }
 
         try:
-            print(dir)
             iskRun(browser)
-            sheet.cell(row=i, column=23, value="success")
-            wb.save(file_path)
-
+            print(f"[PID] {i} -> success")
         except Exception as e:
-            print("Ошибка:", e)
-            sheet.cell(row=i, column=23, value="exception")
-            wb.save(file_path)
+            print(f"[PID] {i} -> exception {e}")
 
-    input("Готово. Для выхода нажмите на Enter.")
     browser.driver.quit()
+
+def main():
+    print('Открываем файл config.txt...')
+    try:
+        cfg = globals.read_config("config.txt")
+        print('Конфигурация загружена!')
+    except Exception as e:
+        print("Файл config.txt не найден или логин/пароль не указан!")
+        return
+    
+    print(globals.cfg)
+
+    wb = load_workbook(globals.cfg['file'])
+    sheet = wb.active
+    rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
+
+    n_workers = 5
+    chunk_size = len(rows) // n_workers + 1
+    chunks = [rows[i:i + chunk_size] for i in range(0, len(rows), chunk_size)]
+
+    with Pool(processes=n_workers) as pool:
+        pool.map(process_rows, chunks)
 
 if __name__ == "__main__":
     main()
