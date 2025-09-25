@@ -88,7 +88,7 @@ def main():
     sheet = wb.active
     rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
 
-    n_workers = 5
+    n_workers = int(globals.cfg.get("count_process") or 1)
     chunk_size = len(rows) // n_workers + 1
     chunks = [rows[i:i + chunk_size] for i in range(0, len(rows), chunk_size)]
 

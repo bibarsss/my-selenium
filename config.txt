@@ -1,4 +1,7 @@
 file=600.xlsx
+
+count_process=3
+
 iin=010213500250
 password=Utepov2025!@#
 phone=7711319034
