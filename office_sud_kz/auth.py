@@ -12,17 +12,17 @@ from browser.browser import Browser
 import globals
 import time
 
-def auth(browser: Browser):
+def auth(browser: Browser, cfg: globals.Config):
     while not is_rus_selected(browser):
         clickByIndex(browser, "div.lang a", 1)
         browser.wait_for_loader_done()
         time.sleep(1)
 
-    print(globals.cfg)
+    print(cfg.data)
 
-    while not textIsSetByPlaceholder(browser, "ИИН/БИН", globals.cfg['iin']) and not textByPlaceholder(browser, "Пароль", globals.cfg['password']):
-        textByPlaceholder(browser, "ИИН/БИН", globals.cfg['iin'])
-        textByPlaceholder(browser, "Пароль", globals.cfg['password'])
+    while not textIsSetByPlaceholder(browser, "ИИН/БИН", cfg.data['iin']) and not textByPlaceholder(browser, "Пароль", cfg.data['password']):
+        textByPlaceholder(browser, "ИИН/БИН", cfg.data['iin'])
+        textByPlaceholder(browser, "Пароль", cfg.data['password'])
         browser.wait_for_loader_done()
 
     clickByValue(browser, 'Войти')

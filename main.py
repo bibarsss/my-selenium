@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 import globals
 import unicodedata
 
-def process_rows(rows, worker_id):
+def process_rows(rows, worker_id, cfg: globals.Data):
     from browser.browser import Browser
     from office_sud_kz.auth import auth, is_authorized
     from office_sud_kz.isk.main import run as iskRun
@@ -13,7 +13,7 @@ def process_rows(rows, worker_id):
     print(f"[Worker {worker_id}] starting browser...")
     browser = Browser()
     browser.safe_get("https://office.sud.kz/")
-    auth(browser)
+    auth(browser, cfg)
 
     if not is_authorized(browser):
         print(f"[Worker {worker_id}] Не авторизован!")
@@ -76,25 +76,27 @@ def process_rows(rows, worker_id):
 def main():
     print('Открываем файл config.txt...')
     try:
-        cfg = globals.read_config("config.txt")
+        cfg = globals.Config().load_config()
         print('Конфигурация загружена!')
     except Exception as e:
-        print("Файл config.txt не найден или логин/пароль не указан!")
+        print("Файл config.txt не найден!")
         return
 
-    print(globals.cfg)
+    print(cfg.data)
+    cfg.data['test'] = 1
+    print(cfg.data)
 
-    wb = load_workbook(globals.cfg['file'])
+    wb = load_workbook(cfg.data['file'])
     sheet = wb.active
     rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
 
-    n_workers = int(globals.cfg.get("count_process") or 1)
+    n_workers = int(cfg.data.get("count_process") or 1)
     chunk_size = len(rows) // n_workers + 1
     chunks = [rows[i:i + chunk_size] for i in range(0, len(rows), chunk_size)]
 
     processes = []
     for wid, chunk in enumerate(chunks):
-        p = Process(target=process_rows, args=(chunk, wid))
+        p = Process(target=process_rows, args=(chunk, wid, cfg))
         p.start()
         processes.append(p)
 
