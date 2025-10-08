@@ -5,7 +5,6 @@ build_windows:
   stage: build
   tags:
     - windows
-    - python
   script:
     - echo "Starting Python application build..."
     - python --version
