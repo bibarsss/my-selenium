@@ -1,10 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
-import time
+import os
+import platform
 
 class Browser:
     def __init__(self):
@@ -13,8 +15,14 @@ class Browser:
         # options.add_argument("--disable-gpu")    # Recommended for headless
         # options.add_argument("--disable-dev-shm-usage")  # Fixes some crashes
         options.page_load_strategy = "normal"
+        system = platform.system()
+        if system == "Windows":
+            driver_path = os.path.join(os.getcwd(), "chromedriver.exe")  # put chromedriver.exe in your project folder
+        elif system == "Darwin":  # macOS
+            driver_path = "/opt/homebrew/bin/chromedriver"
 
-        self.driver = webdriver.Chrome(options=options)
+        service = Service(driver_path)
+        self.driver = webdriver.Chrome(service=service, options=options)
         self.wait = WebDriverWait(self.driver, 60)
 
     def safe_get(self, url, timeout=5, retries=1):

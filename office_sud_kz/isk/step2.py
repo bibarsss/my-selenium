@@ -9,15 +9,15 @@ from browser.browser import Browser
 import globals
 import time
 
-def run(browser: Browser)->bool:
+def run(browser: Browser, data)->bool:
     while not isSelectedByLabel(browser, 'КБК', '2'):
         selectByLabel(browser, 'КБК', '2')
         browser.wait_for_loader_done()
 
-    textByLabel(browser, 'Сумма иска', globals.globalData['summaIska'])
-    textByLabel(browser, 'Сумма государственной пошлины (для расчета воспользуйтесь калькулятором, нажав на иконку в поле ввода)', globals.globalData['powlina'])
+    textByLabel(browser, 'Сумма иска', data['summaIska'])
+    textByLabel(browser, 'Сумма государственной пошлины (для расчета воспользуйтесь калькулятором, нажав на иконку в поле ввода)', data['powlina'])
 
-    uploadFile(browser, globals.globalData['powlina_file_path'], 'selectPaymentScanUploader1')
+    uploadFile(browser, data['powlina_file_path'], 'selectPaymentScanUploader1')
     browser.wait_for_loader_done()
 
     while not htmlHasText(browser, "Данные для электронного бланка"):

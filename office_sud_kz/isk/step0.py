@@ -7,7 +7,7 @@ from browser.browser import Browser
 import globals
 import time
 
-def run(browser: Browser)->bool:
+def run(browser: Browser, data)->bool:
     while not isSelectedByLabel(browser, "Тип производства", "CIVIL") or not isSelectedByLabel(browser, "Инстанция", "FIRSTINSTANCE") or not isSelectedByLabel(browser, "Тип документа", "3"):
         selectByLabel(browser, "Тип производства", "CIVIL")
         browser.wait_for_loader_done()

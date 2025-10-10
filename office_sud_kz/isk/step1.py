@@ -7,9 +7,8 @@ from common.input_check import checkboxByTextValue
 from common.input_text import textModalByRow
 from browser.browser import Browser
 from common.podsudnost import getPodsudnostValue
-import globals
 
-def run(browser: Browser)->bool:
+def run(browser: Browser, data)->bool:
     while not isSelectedByLabel(browser, "Вид производства по делу", "2") or not isSelectedByLabel(browser, "Характер заявления", "1") or not isSelectedByLabel(browser, "Категория дела", "22"):
         selectByLabel(browser, "Вид производства по делу", "2")
         browser.wait_for_loader_done()
@@ -36,13 +35,13 @@ def run(browser: Browser)->bool:
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
-    while not verifyModalRowValue(browser, divId, 3, globals.globalData['iin']) \
-        and not verifyModalRowValue(browser, divId, 9, globals.globalData['phone']):
-        textModalByRow(browser, divId, 3, globals.globalData['iin'])  
+    while not verifyModalRowValue(browser, divId, 3, data['iin']) \
+        and not verifyModalRowValue(browser, divId, 9, data['phone']):
+        textModalByRow(browser, divId, 3, data['iin'])  
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
         browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 9, globals.globalData['phone'])  
+        textModalByRow(browser, divId, 9, data['phone'])  
         browser.wait_for_loader_done()
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
@@ -63,17 +62,17 @@ def run(browser: Browser)->bool:
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
-    while not verifyModalRowValue(browser, divId, 4, globals.globalData['bin']) \
-        or not verifyModalRowValue(browser, divId, 7, globals.globalData['address']) \
-        or not verifyModalRowValue(browser, divId, 8, globals.globalData['detail']):
+    while not verifyModalRowValue(browser, divId, 4, data['bin']) \
+        or not verifyModalRowValue(browser, divId, 7, data['address']) \
+        or not verifyModalRowValue(browser, divId, 8, data['detail']):
 
-        textModalByRow(browser, divId, 4, globals.globalData['bin'])
+        textModalByRow(browser, divId, 4, data['bin'])
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 4)
         browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 7, globals.globalData['address'])
+        textModalByRow(browser, divId, 7, data['address'])
         browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 8, globals.globalData['detail'])
+        textModalByRow(browser, divId, 8, data['detail'])
         browser.wait_for_loader_done()
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
@@ -94,19 +93,19 @@ def run(browser: Browser)->bool:
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
-    while not verifyModalRowValue(browser, divId, 3, globals.globalData['iin_otvet4ik']) \
-        and not verifyModalRowValue(browser, divId, 9, globals.globalData['phone_otvet4ik']):
-        textModalByRow(browser, divId, 3, globals.globalData['iin_otvet4ik'])
+    while not verifyModalRowValue(browser, divId, 3, data['iin_otvet4ik']) \
+        and not verifyModalRowValue(browser, divId, 9, data['phone_otvet4ik']):
+        textModalByRow(browser, divId, 3, data['iin_otvet4ik'])
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
         browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 9, globals.globalData['phone_otvet4ik'])  
+        textModalByRow(browser, divId, 9, data['phone_otvet4ik'])  
         browser.wait_for_loader_done()
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
     browser.wait_for_loader_done()
 
-    podsudnost = getPodsudnostValue(globals.globalData['podsudnost'])
+    podsudnost = getPodsudnostValue(data['podsudnost'])
     sudValue = podsudnost['sudValue']
     sudName = podsudnost['sudName']
     oblastValue = podsudnost['oblastValue']

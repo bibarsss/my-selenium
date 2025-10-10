@@ -1,11 +1,23 @@
-import globals
+import sqlite3
+
+def run(db: str):
+    connection = sqlite3.connect(db)
+    
+    cursor = connection.cursor()
+    cursor.execute('''
+        DROP TABLE IF EXISTS isk 
+        ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS isk(
+                    id INTEGER PRIMARY KEY,
+                    number TEXT NOT NULL 
+                   )
+                        ''')
+    connection.commit()        
+    connection.close()
+
+a = 'database_sud.db'
 
 
-a = globals.Config().load_config()
-# print(a.data)
+run(a)
 
-b = globals.IskData(a.data.copy())
-# print(b.data)
-b.data['1111111111111111'] = '11111111111'
-print(a.data)
-print(b.data)
