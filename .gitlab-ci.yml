@@ -1,0 +1,22 @@
+stages:
+  - build
+
+build_windows:
+  stage: build
+  tags:
+    - windows
+  script:
+    - echo "Starting Python application build..."
+    - python --version
+    - pip --version
+    - python -m pip install --upgrade pip
+    - pip install -r requirements.txt
+    - pip install pyinstaller
+    - pyinstaller main.spec
+    - echo "Build completed successfully!"
+  artifacts:
+    paths:
+      - dist/main.exe
+    expire_in: 1 week
+  only:
+    - main
