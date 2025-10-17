@@ -65,19 +65,29 @@ def table_name():
     return 'isk'
 
 def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
-    data = {
-        "number": str(row[cfg.index('isk_excel_number')].value),
-        "phone_otvet4ik": str(row[cfg.index('isk_excel_phone_otvet4ik')].value),
-        "podsudnost": str(row[cfg.index('isk_excel_podsudnost')].value),
-        "iin_otvet4ik": str(row[cfg.index('isk_excel_iin_otvet4ik')].value),
-        "summaIska": str(row[cfg.index('isk_excel_summa_iska')].value),
-        "powlina": str(row[cfg.index('isk_excel_powlina')].value),
-        "isk_file_realname": str(row[cfg.index('isk_excel_file_name')].value) + ".pdf",
-        "status": str(row[cfg.index('excel_status')].value),
-        "status_text": str(row[cfg.index('excel_status_text')].value),
-        "excel_line_number": i
-        }
+    def safe_get(column_name: str) -> str:
+        try:
+            idx = cfg.index(column_name)
+            return str(row[idx].value) if row[idx].value is not None else ""
+        except (ValueError, IndexError):
+            # ValueError if column name not found in config
+            # IndexError if row doesn't have that many columns
+            return ""
 
+    data = {
+        "number": safe_get('isk_excel_number'),
+        "phone_otvet4ik": safe_get('isk_excel_phone_otvet4ik'),
+        "podsudnost": safe_get('isk_excel_podsudnost'),
+        "iin_otvet4ik": safe_get('isk_excel_iin_otvet4ik'),
+        "summaIska": safe_get('isk_excel_summa_iska'),
+        "powlina": safe_get('isk_excel_powlina'),
+        "isk_file_realname": safe_get('isk_excel_file_name') + ".pdf",
+        "status": safe_get('excel_status'),
+        "status_text": safe_get('excel_status_text'),
+        "excel_line_number": i,
+    }
+
+    # Validate that required fields are not None or 'None'
     if not all(v is not None and v != 'None' for k, v in data.items() if k not in ['status', 'status_text']):
         return
 
