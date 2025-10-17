@@ -4,9 +4,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from . import step0, step1, step2, step3, step4
 from browser.browser import Browser
 
-def run(browser: Browser, data):
+def run(browser: Browser, data, worker_id):
     browser.wait_for_loader_done()
-    browser.safe_get("https://office.sud.kz/")
+    browser.main_office_sud_kz()
     browser.wait_for_loader_done()
 
     while not htmlHasText(browser, "Подача документа в судебный орган"):
@@ -16,19 +16,19 @@ def run(browser: Browser, data):
         new_form_button.click()
         browser.wait_for_loader_done()
 
-    print('step 0')
+    print(f'[Worker {worker_id}] step 0')
     step0.run(browser, data)
 
-    print('step 1')
+    print(f'[Worker {worker_id}] step 1')
     step1.run(browser, data)
     
-    print('step 2')
+    print(f'[Worker {worker_id}] step 2')
     step2.run(browser, data)
 
-    print('step 3')
+    print(f'[Worker {worker_id}] step 3')
     step3.run(browser, data)
 
-    print('step 4')
+    print(f'[Worker {worker_id}] step 4')
     step4.run(browser, data)
     
     return

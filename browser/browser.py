@@ -25,6 +25,10 @@ class Browser:
         self.driver = webdriver.Chrome(service=service, options=options)
         self.wait = WebDriverWait(self.driver, 60)
 
+    def main_office_sud_kz(self):
+        # self.safe_get("https://93.185.73.249/")
+        self.safe_get("https://office.sud.kz/")
+# https://93.185.73.249/
     def safe_get(self, url, timeout=5, retries=1):
         for attempt in range(retries + 1):
             self.driver.get(url)

@@ -12,7 +12,7 @@ def get_data(row, cfg: Config):
                 break
 
         if not dir:
-            return None
+            return 'Папка не найдена!' 
             
         data = {
             "iin": str(cfg.get('iin')).zfill(12),
@@ -43,7 +43,7 @@ def migration(db: str):
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS isk(
                     id INTEGER PRIMARY KEY,
-                    excel_line INTEGER,
+                    excel_line_number INTEGER,
                     iin_otvet4ik TEXT NOT NULL, 
                     number TEXT NOT NULL, 
                     phone_otvet4ik TEXT NOT NULL, 
@@ -75,7 +75,7 @@ def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
         "isk_file_realname": str(row[cfg.index('isk_excel_file_name')].value) + ".pdf",
         "status": str(row[cfg.index('excel_status')].value),
         "status_text": str(row[cfg.index('excel_status_text')].value),
-        "excel_line": i
+        "excel_line_number": i
         }
 
     if not all(v is not None and v != 'None' for k, v in data.items() if k not in ['status', 'status_text']):
@@ -86,25 +86,3 @@ def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
     query = f"INSERT INTO isk({columns}) VALUES ({placeholders})"
 
     cursor.execute(query, data)
-    # globals.globalData = {
-    #     "iin": globals.cfg['iin'],
-    #     "bin": globals.cfg['bin'],
-    #     "phone": globals.cfg['phone'],
-    #     "phone_otvet4ik": "isk_excel_phone_otvet4ik"
-    #     "address": globals.cfg['address'],
-    #     "detail": globals.cfg['detail'],
-    #     "podsudnost": str(row[globals.index('isk_excel_podsudnost')].value),
-    #     "number": number,
-    #     "iin_otvet4ik": str(row[globals.index('isk_excel_iin_otvet4ik')].value).zfill(12),
-    #     "summaIska": str(row[globals.index('isk_excel_summa_iska')].value),
-    #     "powlina": str(row[globals.index('isk_excel_powlina')].value),
-    #     "dir": str(dir),
-    #     "powlina_file_path": str(dir / globals.cfg['isk_powlina_file_name']),
-    #     "isk_file_path": str(dir / globals.cfg['isk_file_name']),
-    #     "isk_file_realpath": str(dir / (str(row[globals.index('isk_excel_file_name')].value) + ".pdf")),
-    # }
-
-# a = 'database_sud.db'
-
-# run(a)
-

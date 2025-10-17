@@ -3,14 +3,32 @@ from multiprocessing import Process
 from pathlib import Path
 from openpyxl import load_workbook
 import globals
-from my_types import isk as iskMigration
+from my_types import isk as iskType
+from my_types import status as statusType
 import sqlite3
 import os
-os.environ["SELENIUM_MANAGER_NO_BROWSER_DOWNLOAD"] = "1"
+import shutil
+import time
+
 types = {
-    1: iskMigration,
-    # 2: iskMigration
+        1: iskType,
+        2: statusType
     }
+    
+def safe_execute(conn, query, params=(), retries=60):
+    for i in range(retries):
+        try:
+            conn.execute(query, params)
+            conn.commit()  # ✅ commit inside
+            return
+        except sqlite3.OperationalError as e:
+            if "locked" in str(e):
+                print(f"DB is locked, retrying in 0.5s... ({i+1}/{retries})")
+                time.sleep(0.5)
+            else:
+                raise
+    raise RuntimeError("Failed to execute after several retries")
+
 def process_rows(ids, worker_id, cfg: globals.Config):
     from browser.browser import Browser
     from office_sud_kz.auth import auth, is_authorized
@@ -18,34 +36,55 @@ def process_rows(ids, worker_id, cfg: globals.Config):
 
     print(f"[Worker {worker_id}] starting browser...")
     browser = Browser()
-    browser.safe_get("https://office.sud.kz/")
-    auth(browser, cfg)
+    while True:
+        try:
+            browser.main_office_sud_kz()
+            auth(browser, cfg)
+            break
+        except Exception:
+            continue
 
-    if not is_authorized(browser):
-        print(f"[Worker {worker_id}] Не авторизован!")
-        browser.driver.quit()
-        return
+    # if not is_authorized(browser):
+    #     print(f"[Worker {worker_id}] Не авторизован!")
+    #     browser.driver.quit()
+    #     return
 
-    connection = sqlite3.connect(cfg.get('db_name'))
+    connection = sqlite3.connect(cfg.get('db_name'), timeout=30)
+    connection.execute("PRAGMA journal_mode=WAL;")
+    connection.execute("PRAGMA synchronous=NORMAL;")
+    connection.execute("PRAGMA busy_timeout = 5000;")
     connection.row_factory = sqlite3.Row
     table_name = cfg.get('table_name') 
-    cursor = connection.cursor()
     placeholder = ','.join('?' * len(ids))
-    cursor.execute(f"SELECT * FROM {table_name} WHERE id in ({placeholder})", ids)
-    for row in cursor:
+    rows = connection.execute(f"SELECT * FROM {table_name} WHERE id in ({placeholder})", ids).fetchall()
+
+    for row in rows:
+        if int(row['id']) % 10 == 0:
+            browser.main_office_sud_kz()
         number = row['number'] 
+        excel_line_number = row['excel_line_number']
         data = types[cfg.get('type')].get_data(row, cfg)
-        print(f"[Worker {worker_id}] {number}")
-        print(data)
-        if data is None:
+
+        print(f"[Worker {worker_id}] row: {excel_line_number} -> {number}")
+        if type(data) is str:
+            safe_execute(connection, f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
+            # cursor.execute(f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", 
+            #                 ('skipped', 'Data is None', row['id']))
             continue
         
-        try:
-            iskRun(browser, data)
-            # print(f"[Worker {worker_id}] {i} -> success")
-        except Exception as e:
-            # print(f"[Worker {worker_id}] {i} -> exception {e}")
-            continue
+        while True:
+            try:
+                iskRun(browser, data, worker_id)
+                safe_execute(connection, f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", ('success', '', row['id']))
+                # cursor.execute(f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", 
+                #                ('success', '', row['id']))
+            except Exception as e:
+                safe_execute(connection, f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
+                # cursor.execute(f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", 
+                #                ('error', str(e), row['id']))
+            break
+
+    connection.commit()
     connection.close()
     browser.driver.quit()
 
@@ -103,36 +142,31 @@ def main():
 
     for p in processes:
         p.join()
+
+    base, ext = os.path.splitext(cfg.get('file'))
+    dst_file = f"{base}_biba{ext}"
+    shutil.copy(cfg.get('file'), dst_file)   
+
+    connection = sqlite3.connect(cfg.get('db_name'))
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    table_name = type.table_name()
+    rows = cursor.execute(f"SELECT excel_line_number, status, status_text FROM {table_name}").fetchall()
+    connection.close()
     
-    print('enddddddddddddddddddddddd')
-        # try:
-        #     iskRun(browser)
-        #     print(f"[Worker {worker_id}] {i} -> success")
-        #     sheet.cell(row=i, column=20, value="success")  # mark in Excel
-        # except Exception as e:
-        #     print(f"[Worker {worker_id}] {i} -> exception {e}")
-        #     sheet.cell(row=i, column=20, value=f"error: {e}")
+    wb = load_workbook(dst_file)
+    sheet = wb.active
 
-    # for loop 5 times with chunks
+    for row in rows:
+        line_number = row['excel_line_number']
+        status = row['status']
+        status_text = row['status_text']
 
-    # wb = load_workbook(cfg.data['file'])
-    # sheet = wb.active
-    # rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
+        sheet.cell(row=line_number, column=cfg.index('excel_status') + 1, value=status)
+        sheet.cell(row=line_number, column=cfg.index('excel_status_text') + 1, value=status_text)
 
-    # n_workers = int(cfg.data.get("count_process") or 1)
-    # chunk_size = len(rows) // n_workers + 1
-    # chunks = [rows[i:i + chunk_size] for i in range(0, len(rows), chunk_size)]
-
-    # processes = []
-    # for wid, chunk in enumerate(chunks):
-    #     p = Process(target=process_rows, args=(chunk, wid, cfg))
-    #     p.start()
-    #     processes.append(p)
-
-    # for p in processes:
-    #     p.join()
-
-
+    wb.save(dst_file)
 if __name__ == "__main__":
     multiprocessing.freeze_support()  # important for PyInstaller
     main()
