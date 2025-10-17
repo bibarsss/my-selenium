@@ -4,7 +4,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 import globals
 from my_types import isk as iskType
-from my_types import status as statusType
+from my_types import iskstatus as iskStatusType
 import sqlite3
 import os
 import shutil
@@ -12,14 +12,18 @@ import time
 
 types = {
         1: iskType,
-        2: statusType
+        2: iskStatusType
     }
     
+def chunk_list(lst, n):
+    k, m = divmod(len(lst), n)
+    return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
+
 def safe_execute(conn, query, params=(), retries=60):
     for i in range(retries):
         try:
             conn.execute(query, params)
-            conn.commit()  # ✅ commit inside
+            conn.commit()
             return
         except sqlite3.OperationalError as e:
             if "locked" in str(e):
@@ -34,6 +38,7 @@ def process_rows(ids, worker_id, cfg: globals.Config):
     from office_sud_kz.auth import auth, is_authorized
     from office_sud_kz.isk.main import run as iskRun
 
+    print(worker_id, ids)
     print(f"[Worker {worker_id}] starting browser...")
     browser = Browser()
     while True:
@@ -61,15 +66,16 @@ def process_rows(ids, worker_id, cfg: globals.Config):
     for row in rows:
         if int(row['id']) % 10 == 0:
             browser.main_office_sud_kz()
-        number = row['number'] 
+
         excel_line_number = row['excel_line_number']
         data = types[cfg.get('type')].get_data(row, cfg)
 
-        print(f"[Worker {worker_id}] row: {excel_line_number} -> {number}")
+        print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
         if type(data) is str:
             safe_execute(connection, f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
             # cursor.execute(f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", 
             #                 ('skipped', 'Data is None', row['id']))
+            print(f"[Worker {worker_id}] row: {excel_line_number} -> skipped")
             continue
         
         while True:
@@ -131,8 +137,7 @@ def main():
     connection.close()
 
     n_workers = int(cfg.get("count_process") or 1)
-    chunk_size = len(ids) // n_workers + 1
-    chunks = [ids[i:i + chunk_size] for i in range(0, len(ids), chunk_size)]
+    chunks = chunk_list(ids, n_workers)
 
     processes = []
     for wid, chunk in enumerate(chunks):
@@ -157,18 +162,20 @@ def main():
     
     wb = load_workbook(dst_file)
     sheet = wb.active
-
+    
     for row in rows:
         line_number = row['excel_line_number']
-        status = row['status']
-        status_text = row['status_text']
+        for key in type.excel_map():
+            value = type.excel_map()[key]
+            sheet.cell(row=line_number, column=cfg.index(value) + 1, value=row[key])
+        # status = row['status']
+        # status_text = row['status_text']
 
-        sheet.cell(row=line_number, column=cfg.index('excel_status') + 1, value=status)
-        sheet.cell(row=line_number, column=cfg.index('excel_status_text') + 1, value=status_text)
+        # sheet.cell(row=line_number, column=cfg.index('excel_status_text') + 1, value=status_text)
 
     wb.save(dst_file)
 if __name__ == "__main__":
-    multiprocessing.freeze_support()  # important for PyInstaller
+    multiprocessing.freeze_support()
     main()
 
     input("Готово!")

@@ -2,10 +2,11 @@ import sqlite3
 from globals import Config
 
 def label():
-    return 'Проверка статуса'
+    return 'Иск проверка статуса'
 
 def table_name():
-    return 'status'
+    return 'iskstatus'
+
 
 def migration(db: str):
     connection = sqlite3.connect(db)
@@ -30,7 +31,7 @@ def migration(db: str):
 
 def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
     data = {
-        "number": str(row[cfg.index('number')].value),
+        "talon": str(row[cfg.index('iskstatus_excel_talon')].value),
         "excel_line_number": i
         }
 

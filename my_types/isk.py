@@ -2,6 +2,13 @@ import sqlite3
 from globals import Config
 from pathlib import Path
 import unicodedata
+
+def excel_map():
+    return {
+        'status': 'excel_status',
+        'status_text': 'excel_status_text' 
+    }
+
 def get_data(row, cfg: Config):
         number = row['number'] 
 
