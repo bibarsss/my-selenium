@@ -19,24 +19,9 @@ def chunk_list(lst, n):
     k, m = divmod(len(lst), n)
     return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
 
-def safe_execute(conn, query, params=(), retries=60):
-    for i in range(retries):
-        try:
-            conn.execute(query, params)
-            conn.commit()
-            return
-        except sqlite3.OperationalError as e:
-            if "locked" in str(e):
-                print(f"DB is locked, retrying in 0.5s... ({i+1}/{retries})")
-                time.sleep(0.5)
-            else:
-                raise
-    raise RuntimeError("Failed to execute after several retries")
-
 def process_rows(ids, worker_id, cfg: globals.Config):
     from browser.browser import Browser
     from office_sud_kz.auth import auth, is_authorized
-    from office_sud_kz.isk.main import run as iskRun
 
     print(worker_id, ids)
     print(f"[Worker {worker_id}] starting browser...")
@@ -62,6 +47,7 @@ def process_rows(ids, worker_id, cfg: globals.Config):
     table_name = cfg.get('table_name') 
     placeholder = ','.join('?' * len(ids))
     rows = connection.execute(f"SELECT * FROM {table_name} WHERE id in ({placeholder})", ids).fetchall()
+    type = types[cfg.get('type')]
 
     for row in rows:
         if int(row['id']) % 10 == 0:
@@ -71,24 +57,8 @@ def process_rows(ids, worker_id, cfg: globals.Config):
         data = types[cfg.get('type')].get_data(row, cfg)
 
         print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
-        if type(data) is str:
-            safe_execute(connection, f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
-            # cursor.execute(f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", 
-            #                 ('skipped', 'Data is None', row['id']))
-            print(f"[Worker {worker_id}] row: {excel_line_number} -> skipped")
-            continue
-        
-        while True:
-            try:
-                iskRun(browser, data, worker_id)
-                safe_execute(connection, f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", ('success', '', row['id']))
-                # cursor.execute(f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", 
-                #                ('success', '', row['id']))
-            except Exception as e:
-                safe_execute(connection, f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
-                # cursor.execute(f"UPDATE {table_name} SET status = ?, status_text = ? WHERE id = ?", 
-                #                ('error', str(e), row['id']))
-            break
+        type.run(browser, data, connection, row, worker_id)        
+
 
     connection.commit()
     connection.close()
@@ -136,6 +106,7 @@ def main():
     ids = [r[0] for r in cursor.execute(f"SELECT id FROM {table_name} WHERE status != ?", ('success',))]
     connection.close()
 
+    print('ids', ids, table_name)
     n_workers = int(cfg.get("count_process") or 1)
     chunks = chunk_list(ids, n_workers)
 
@@ -168,10 +139,6 @@ def main():
         for key in type.excel_map():
             value = type.excel_map()[key]
             sheet.cell(row=line_number, column=cfg.index(value) + 1, value=row[key])
-        # status = row['status']
-        # status_text = row['status_text']
-
-        # sheet.cell(row=line_number, column=cfg.index('excel_status_text') + 1, value=status_text)
 
     wb.save(dst_file)
 if __name__ == "__main__":

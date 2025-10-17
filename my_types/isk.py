@@ -2,6 +2,8 @@ import sqlite3
 from globals import Config
 from pathlib import Path
 import unicodedata
+from common.sqlite import safe_execute
+from office_sud_kz.isk.main import run as iskRun
 
 def excel_map():
     return {
@@ -77,8 +79,6 @@ def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
             idx = cfg.index(column_name)
             return str(row[idx].value) if row[idx].value is not None else ""
         except (ValueError, IndexError):
-            # ValueError if column name not found in config
-            # IndexError if row doesn't have that many columns
             return ""
 
     data = {
@@ -103,3 +103,18 @@ def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
     query = f"INSERT INTO isk({columns}) VALUES ({placeholders})"
 
     cursor.execute(query, data)
+
+def run(browser, data, connection, row, worker_id):
+    if type(data) is str:
+        print(f"UPDATE {table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
+        safe_execute(connection, f"UPDATE {table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
+        print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
+        return 
+
+    while True:
+        try:
+            iskRun(browser, data, worker_id)
+            safe_execute(connection, f"UPDATE {table_name()} SET status = ?, status_text = ? WHERE id = ?", ('success', '', row['id']))
+        except Exception as e:
+            safe_execute(connection, f"UPDATE {table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
+        break
