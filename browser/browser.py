@@ -51,3 +51,13 @@ class Browser:
             WebDriverWait(self.driver, timeout).until(lambda d: "d-none" in d.find_element(By.CSS_SELECTOR, "span.loader").get_attribute("class"))
         except TimeoutException:
             raise TimeoutException("Loader did not disappear within timeout")
+
+    def htmlHasText(self, text: str) -> bool:
+        xpath = f'//*[contains(normalize-space(.), "{text.strip()}")]'
+        try:
+            WebDriverWait(self.driver, 0.1).until(
+                EC.presence_of_element_located((By.XPATH, xpath))
+            )
+            return True
+        except Exception:
+            return False

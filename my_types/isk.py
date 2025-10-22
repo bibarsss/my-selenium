@@ -106,7 +106,6 @@ def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
 
 def run(browser, data, connection, row, worker_id):
     if type(data) is str:
-        print(f"UPDATE {table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
         safe_execute(connection, f"UPDATE {table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
         print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
         return 

@@ -21,10 +21,9 @@ def chunk_list(lst, n):
 
 def process_rows(ids, worker_id, cfg: globals.Config):
     from browser.browser import Browser
-    from office_sud_kz.auth import auth, is_authorized
+    from office_sud_kz.auth import auth
 
-    print(worker_id, ids)
-    print(f"[Worker {worker_id}] starting browser...")
+    print(f"[Worker {worker_id}] starting...")
     browser = Browser()
     while True:
         try:
@@ -33,11 +32,6 @@ def process_rows(ids, worker_id, cfg: globals.Config):
             break
         except Exception:
             continue
-
-    # if not is_authorized(browser):
-    #     print(f"[Worker {worker_id}] Не авторизован!")
-    #     browser.driver.quit()
-    #     return
 
     connection = sqlite3.connect(cfg.get('db_name'), timeout=30)
     connection.execute("PRAGMA journal_mode=WAL;")
@@ -51,12 +45,15 @@ def process_rows(ids, worker_id, cfg: globals.Config):
 
     for row in rows:
         if int(row['id']) % 10 == 0:
-            browser.main_office_sud_kz()
+            browser.refresh()
 
         excel_line_number = row['excel_line_number']
         data = types[cfg.get('type')].get_data(row, cfg)
 
+        
         print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
+        # if row['excel_line_number'] < 20:
+        #     continue
         type.run(browser, data, connection, row, worker_id)        
 
 
@@ -106,7 +103,6 @@ def main():
     ids = [r[0] for r in cursor.execute(f"SELECT id FROM {table_name} WHERE status != ?", ('success',))]
     connection.close()
 
-    print('ids', ids, table_name)
     n_workers = int(cfg.get("count_process") or 1)
     chunks = chunk_list(ids, n_workers)
 
@@ -119,6 +115,7 @@ def main():
     for p in processes:
         p.join()
 
+    print('Готово! Теперь сохраняем на эксель файл...')
     base, ext = os.path.splitext(cfg.get('file'))
     dst_file = f"{base}_biba{ext}"
     shutil.copy(cfg.get('file'), dst_file)   
@@ -128,7 +125,7 @@ def main():
     cursor = connection.cursor()
 
     table_name = type.table_name()
-    rows = cursor.execute(f"SELECT excel_line_number, status, status_text FROM {table_name}").fetchall()
+    rows = cursor.execute(f"SELECT * FROM {table_name}").fetchall()
     connection.close()
     
     wb = load_workbook(dst_file)
