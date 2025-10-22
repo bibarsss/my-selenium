@@ -8,7 +8,7 @@ from my_types import iskstatus as iskStatusType
 import sqlite3
 import os
 import shutil
-import time
+from common.save_to_excel import run as SaveToExcelRun
 
 types = {
         1: iskType,
@@ -52,8 +52,6 @@ def process_rows(ids, worker_id, cfg: globals.Config):
 
         
         print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
-        # if row['excel_line_number'] < 20:
-        #     continue
         type.run(browser, data, connection, row, worker_id)        
 
 
@@ -63,22 +61,29 @@ def process_rows(ids, worker_id, cfg: globals.Config):
 
 
 def main():
-    options = ", ".join(f"{k} - {v.label()}" for k, v in types.items())
-    try:
-        type = int(input(f"Введите тип флоу: ({options}): "))
-        if type not in types.keys():
-            print("Неправильный тип флоу: ", type)
-            return
-    except Exception:
-        print("Неправильный тип флоу!")
-        return
-
     print('Открываем файл config.txt...')
     try:
         cfg = globals.Config().load_config()
         print('Конфигурация загружена!')
     except Exception as e:
         print("Файл config.txt не найден!")
+        return
+
+    options = ", ".join(f"{k} - {v.label()}" for k, v in types.items())
+    full_options = options + ", 10 - Перезапуск если не получил файл"
+    try:
+        type = int(input(f"Введите тип флоу: ({full_options}): "))
+        if str(type) == '10':
+            type = int(input(f"Введите тип флоу для перезапуска: ({options}): "))
+            SaveToExcelRun(cfg, types[type])
+            print('it is 10')
+            return
+
+        if type not in types.keys():
+            print("Неправильный тип флоу: ", type)
+            return
+    except Exception:
+        print("Неправильный тип флоу!")
         return
 
     # migration
@@ -116,28 +121,8 @@ def main():
         p.join()
 
     print('Готово! Теперь сохраняем на эксель файл...')
-    base, ext = os.path.splitext(cfg.get('file'))
-    dst_file = f"{base}_biba{ext}"
-    shutil.copy(cfg.get('file'), dst_file)   
+    SaveToExcelRun(cfg, type)
 
-    connection = sqlite3.connect(cfg.get('db_name'))
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-
-    table_name = type.table_name()
-    rows = cursor.execute(f"SELECT * FROM {table_name}").fetchall()
-    connection.close()
-    
-    wb = load_workbook(dst_file)
-    sheet = wb.active
-    
-    for row in rows:
-        line_number = row['excel_line_number']
-        for key in type.excel_map():
-            value = type.excel_map()[key]
-            sheet.cell(row=line_number, column=cfg.index(value) + 1, value=row[key])
-
-    wb.save(dst_file)
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     main()
