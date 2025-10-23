@@ -5,6 +5,8 @@ import globals
 from openpyxl import load_workbook
 
 def run(cfg: globals.Config, type):
+    print('Сохраняем на эксель файл...')
+
     base, ext = os.path.splitext(cfg.get('file'))
     dst_file = f"{base}_biba{ext}"
     shutil.copy(cfg.get('file'), dst_file)   

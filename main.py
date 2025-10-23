@@ -120,7 +120,6 @@ def main():
     for p in processes:
         p.join()
 
-    print('Готово! Теперь сохраняем на эксель файл...')
     SaveToExcelRun(cfg, type)
 
 if __name__ == "__main__":

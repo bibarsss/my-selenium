@@ -67,9 +67,12 @@ def get_result_sud_name(text):
 
 def get_result_number(text):
     text = text.replace('\n', ' ')
-    match = re.search(r"№\s*([\d\-\/]+)", text)
-    if match:
-        return match.group(1).strip()
+    match = re.findall(r"№\s*([\d\-\/]+)", text)
+    
+    if len(match) != 0:
+        for m in match:
+            if '-' in m and '/' in m:
+                return m
 
     return ''
 
