@@ -1,4 +1,3 @@
-import multiprocessing
 from multiprocessing import Process
 from pathlib import Path
 from openpyxl import load_workbook
@@ -48,9 +47,8 @@ def process_rows(ids, worker_id, cfg: globals.Config):
             browser.refresh()
 
         excel_line_number = row['excel_line_number']
-        data = types[cfg.get('type')].get_data(row, cfg)
+        data = type.get_data(row, cfg)
 
-        
         print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
         type.run(browser, data, connection, row, worker_id)        
 

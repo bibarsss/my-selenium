@@ -3,6 +3,9 @@ import sqlite3
 from common.sqlite import safe_execute
 from globals import Config
 from office_sud_kz.application.main import run as applicationRun
+from pathlib import Path 
+import unicodedata
+
 
 def label():
     return 'Хотадайство'
@@ -41,7 +44,6 @@ def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
             return ""
 
     data = {
-        "talon": str(row[cfg.index('iskstatus_excel_talon')].value),
         "excel_line_number": i,
         'iin': str(row[cfg.index('application_excel_iin')].value),
         'podsudnost': str(row[cfg.index('application_excel_podsudnost')].value),
@@ -57,48 +59,58 @@ def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
 
     cursor.execute(query, data)
 
-# def excel_map():
-#     return {
-#         'status': 'excel_status',
-#         'status_text': 'excel_status_text',
-#         'result': 'iskstatus_excel_result', 
-#         'result_date': 'iskstatus_excel_result_date', 
-#         'result_sud_name': 'iskstatus_excel_result_sud_name', 
-#         'result_number': 'iskstatus_excel_result_number', 
-#     }
+def get_data(row, cfg: Config):
+        iin = str(row['iin']).zfill(12)
+        dir = None
 
+        file_name = None
+        for path in Path(".").rglob("*.pdf"):
+            if iin in unicodedata.normalize("NFC", path.name):
+                dir = path.parent
+                file_name = path.name
+                break
 
-# def get_data(row, cfg: Config):
-#         data = {
-#             "talon": row['talon'],
-#         }
-#         return data 
+        if not dir or not file_name:
+            return 'Папка не найдена!' 
 
+        data = {
+            "iin": iin,
+            "podsudnost": row['podsudnost'],
+            "nomer_dela": row['nomer_dela'],
+            "otvet4ik_po_delu": row['otvet4ik_po_delu'],
+            "address": cfg.get('address'),
+            'istcy_po_delu': cfg.get('application_istcy_po_delu'),
+            'dir': dir,
+            "file_path": str(dir / file_name),
+        }
 
-# def run(browser, data, connection, row, worker_id):
-#     try:
-#         parsed_data = iskstatusRun(browser, data, worker_id)
-#         # parsed_data = {
-#         #         'result': 'res',
-#         #         'result_date': 'result_date',
-#         #         'result_sud_name': 'result_sud_name',
-#         #         'result_number':'result_number' 
-#         # }
-#         safe_execute(connection, f'''UPDATE {table_name()} 
-#                      SET status = ?, 
-#                      status_text = ?, 
-#                      result = ?,
-#                      result_date = ?,
-#                      result_sud_name = ?,
-#                      result_number = ?
-#                      WHERE id = ?
-#                      ''', 
-#                      ('success', 
-#                       '', 
-#                       parsed_data['result'],
-#                       parsed_data['result_date'],
-#                       parsed_data['result_sud_name'],
-#                       parsed_data['result_number'],
-#                       row['id']),)
-#     except Exception as e:
-#         safe_execute(connection, f"UPDATE {table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
+        return data 
+
+def run(browser, data, connection, row, worker_id):
+    if type(data) is str:
+        safe_execute(connection, f"UPDATE {table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
+        print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
+        return 
+
+    try:
+        applicationRun(browser, data, worker_id)
+        safe_execute(connection, f'''UPDATE {table_name()} 
+                     SET status = ?, 
+                     status_text = ? 
+                     WHERE id = ?
+                     ''', 
+                     ('success', 
+                      '', 
+                      row['id']),)
+    except Exception as e:
+        safe_execute(connection, f'''UPDATE {table_name()} 
+                     SET status = ?, 
+                     status_text = ? 
+                     WHERE id = ?''', 
+                     ('error', str(e), row['id']),)
+
+def excel_map():
+    return {
+        'status': 'excel_status',
+        'status_text': 'excel_status_text',
+    }

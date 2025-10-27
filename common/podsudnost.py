@@ -1,3 +1,5 @@
+import re
+
 oblastMap = {
     "город Астана": {
         "value": "2",
@@ -384,6 +386,7 @@ oblastMap = {
 }
 
 def getPodsudnostValue(podsudnost: str)->dict:
+    podsudnost = normalize_text(podsudnost)
     for oblast in oblastMap:
         for sud in oblastMap[oblast]['sudebnieOrgany']:
             if podsudnost in sud:
@@ -398,3 +401,8 @@ def getPodsudnostValue(podsudnost: str)->dict:
        "oblastValue": None,
        'sudName': None
     }
+
+def normalize_text(s: str) -> str:
+    s = s.replace('\xa0', ' ')  # replace non-breaking spaces
+    s = re.sub(r'\s+', ' ', s)  # collapse multiple spaces/tabs/newlines
+    return s.strip()

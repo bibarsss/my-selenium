@@ -1,6 +1,6 @@
 __pycache__
 .venv
-/arch
+/flow_isk
 *.pdf
 .vscode
 auth.txt

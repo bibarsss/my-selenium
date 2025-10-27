@@ -13,11 +13,11 @@ def excel_map():
     }
 
 def get_data(row, cfg: Config):
-        number = row['number'] 
+        iin = str(cfg.get('iin')).zfill(12)
 
         dir = None
         for path in Path(".").rglob("*.pdf"):
-            if number in unicodedata.normalize("NFC", path.name):
+            if iin in unicodedata.normalize("NFC", path.name):
                 dir = path.parent
                 break
 
@@ -25,12 +25,12 @@ def get_data(row, cfg: Config):
             return 'Папка не найдена!' 
             
         data = {
-            "iin": str(cfg.get('iin')).zfill(12),
+            "iin": iin,
             "bin": cfg.get('bin'),
             "phone": cfg.get('phone'),
             "address": cfg.get('address'),
             "detail": cfg.get('detail'),
-            "number": number,
+            "number": str(cfg.get('iin')).zfill(12),
             "dir": str(dir),
             "phone_otvet4ik": row['phone_otvet4ik'],
             "podsudnost": row['podsudnost'],
@@ -39,8 +39,9 @@ def get_data(row, cfg: Config):
             "powlina": row['powlina'],
             "powlina_file_path": str(dir / cfg.get('isk_powlina_file_name')),
             "isk_file_path": str(dir / cfg.get('isk_file_name')),
-            "isk_file_realpath": str(dir / (str(cfg.get('isk_excel_file_name')) + ".pdf")),
+            "isk_file_realpath": str(dir / row['isk_file_realname']),
         }
+
         return data 
 
 def migration(db: str):
