@@ -1,3 +1,4 @@
+#Проверка иск статуса
 import sqlite3
 from common.sqlite import safe_execute
 from globals import Config

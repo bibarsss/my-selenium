@@ -1,3 +1,4 @@
+#Иск
 import sqlite3
 from globals import Config
 from pathlib import Path
