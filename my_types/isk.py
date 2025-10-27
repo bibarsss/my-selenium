@@ -13,7 +13,7 @@ def excel_map():
     }
 
 def get_data(row, cfg: Config):
-        iin = str(cfg.get('iin')).zfill(12)
+        iin = str(row['iin_otvet4ik']).zfill(12)
 
         dir = None
         for path in Path(".").rglob("*.pdf"):
@@ -25,7 +25,7 @@ def get_data(row, cfg: Config):
             return 'Папка не найдена!' 
             
         data = {
-            "iin": iin,
+            "iin": str(cfg.get('iin')).zfill(12),
             "bin": cfg.get('bin'),
             "phone": cfg.get('phone'),
             "address": cfg.get('address'),
@@ -34,7 +34,7 @@ def get_data(row, cfg: Config):
             "dir": str(dir),
             "phone_otvet4ik": row['phone_otvet4ik'],
             "podsudnost": row['podsudnost'],
-            "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
+            "iin_otvet4ik": iin,
             "summaIska": row['summaIska'],
             "powlina": row['powlina'],
             "powlina_file_path": str(dir / cfg.get('isk_powlina_file_name')),
