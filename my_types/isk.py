@@ -30,7 +30,7 @@ def get_data(row, cfg: Config):
             "phone": cfg.get('phone'),
             "address": cfg.get('address'),
             "detail": cfg.get('detail'),
-            "number": str(cfg.get('iin')).zfill(12),
+            "number": row['number'] ,
             "dir": str(dir),
             "phone_otvet4ik": row['phone_otvet4ik'],
             "podsudnost": row['podsudnost'],

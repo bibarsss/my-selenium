@@ -61,8 +61,8 @@ def insert(row: tuple, cfg: Config, cursor: sqlite3.Cursor, i):
 
 def get_data(row, cfg: Config):
         iin = str(row['iin']).zfill(12)
-        dir = None
 
+        dir = None
         file_name = None
         for path in Path(".").rglob("*.pdf"):
             if iin in unicodedata.normalize("NFC", path.name):
@@ -71,7 +71,7 @@ def get_data(row, cfg: Config):
                 break
 
         if not dir or not file_name:
-            return 'Папка не найдена!' 
+            return f'Папка или файл не найден!' 
 
         data = {
             "iin": iin,
