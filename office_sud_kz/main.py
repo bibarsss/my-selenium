@@ -48,8 +48,7 @@ def run():
 
     connection.commit()        
 
-    table_name = type.table_name()
-    ids = [r[0] for r in cursor.execute(f"SELECT id FROM {table_name} WHERE status != ?", ('success',))]
+    ids = [r[0] for r in cursor.execute(f"SELECT id FROM {type.table_name()} WHERE status != ?", ('success',))]
     connection.close()
 
     n_workers = int(type.cfg.get("count_process") or 1)
