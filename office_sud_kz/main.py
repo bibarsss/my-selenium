@@ -1,50 +1,9 @@
 from multiprocessing import Process
-from pathlib import Path
 from openpyxl import load_workbook
 import globals
 import sqlite3
 from flow_types.available_types import types 
 from flow_types.base import Type
-
-def chunk_list(lst, n):
-    k, m = divmod(len(lst), n)
-    return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
-
-def process_rows(ids, worker_id, type: Type):
-    from browser.browser import Browser
-    from office_sud_kz.auth import auth
-
-    print(f"[Worker {worker_id}] starting...")
-    browser = Browser()
-
-    while True:
-        try:
-            browser.main_office_sud_kz()
-            auth(browser, type.cfg)
-            break
-        except Exception:
-            continue
-
-    connection = sqlite3.connect(type.cfg.get('db_name'), timeout=30)
-    connection.execute("PRAGMA journal_mode=WAL;")
-    connection.execute("PRAGMA synchronous=NORMAL;")
-    connection.execute("PRAGMA busy_timeout = 5000;")
-    connection.row_factory = sqlite3.Row
-
-    placeholder = ','.join('?' * len(ids))
-    rows = connection.execute(f"SELECT * FROM {type.table_name()} WHERE id in ({placeholder})", ids).fetchall()
-
-    for row in rows:
-        if int(row['id']) % 10 == 0:
-            browser.refresh()
-
-        excel_line_number = row['excel_line_number']
-        print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
-        type.run(browser, connection, row, worker_id)        
-
-    connection.commit()
-    connection.close()
-    browser.driver.quit()
 
 def run():
     print('Открываем файл config.txt...')
@@ -106,3 +65,43 @@ def run():
         p.join()
 
     type.save_to_excel()
+
+def process_rows(ids, worker_id, type: Type):
+    from browser.browser import Browser
+    from office_sud_kz.auth import auth
+
+    print(f"[Worker {worker_id}] starting...")
+    browser = Browser()
+
+    while True:
+        try:
+            browser.main_office_sud_kz()
+            auth(browser, type.cfg)
+            break
+        except Exception:
+            continue
+
+    connection = sqlite3.connect(type.cfg.get('db_name'), timeout=30)
+    connection.execute("PRAGMA journal_mode=WAL;")
+    connection.execute("PRAGMA synchronous=NORMAL;")
+    connection.execute("PRAGMA busy_timeout = 5000;")
+    connection.row_factory = sqlite3.Row
+
+    placeholder = ','.join('?' * len(ids))
+    rows = connection.execute(f"SELECT * FROM {type.table_name()} WHERE id in ({placeholder})", ids).fetchall()
+
+    for row in rows:
+        if int(row['id']) % 10 == 0:
+            browser.refresh()
+
+        excel_line_number = row['excel_line_number']
+        print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
+        type.run(browser, connection, row, worker_id)        
+
+    connection.commit()
+    connection.close()
+    browser.driver.quit()
+
+def chunk_list(lst, n):
+    k, m = divmod(len(lst), n)
+    return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
