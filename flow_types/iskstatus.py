@@ -1,8 +1,8 @@
 from pathlib import Path
-import unicodedata
 import sqlite3
-from office_sud_kz.isk.main import run as iskRun
+from office_sud_kz.iskstatus.main import run as iskstatusRun
 from flow_types.base import Type
+from common.sqlite import safe_execute
 
 class IskstatusType(Type):
     def label(self)->str:
@@ -71,5 +71,32 @@ class IskstatusType(Type):
 
         cursor.execute(query, data)
 
-    def run(self, browser, data, connection, row, worker_id):
-        print('run iskstatus')
+    def _get_data(self, row):
+            data = {
+                "talon": row['talon'],
+            }
+
+            return data 
+
+    def run(self, browser, connection, row, worker_id):
+        data = self._get_data(row)
+        try:
+            parsed_data = iskstatusRun(browser, data, worker_id)
+            safe_execute(connection, f'''UPDATE {self.table_name()} 
+                        SET status = ?, 
+                        status_text = ?, 
+                        result = ?,
+                        result_date = ?,
+                        result_sud_name = ?,
+                        result_number = ?
+                        WHERE id = ?
+                        ''', 
+                        ('success', 
+                        '', 
+                        parsed_data['result'],
+                        parsed_data['result_date'],
+                        parsed_data['result_sud_name'],
+                        parsed_data['result_number'],
+                        row['id']),)
+        except Exception as e:
+            safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
