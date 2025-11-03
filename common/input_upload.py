@@ -4,14 +4,15 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def uploadFile(browser, file_path: str, id_suffix: str):
     file_path = os.path.abspath(file_path)
-
+    browser.wait_for_loader_done()
     selector = f"div[id$='{id_suffix}'] input[type='file'], span[id$='{id_suffix}'] input[type='file']"
-
+    browser.wait_for_loader_done()
     file_input = browser.wait.until(
         EC.presence_of_element_located((By.CSS_SELECTOR, selector))
     )
-
+    browser.wait_for_loader_done()
     file_input.send_keys(file_path)
+    browser.wait_for_loader_done()
 
 def uploadFiles(browser, files: list[str], id_suffix: str):
     abs_paths = [os.path.abspath(f) for f in files]

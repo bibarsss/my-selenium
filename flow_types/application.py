@@ -5,8 +5,12 @@ import sqlite3
 from office_sud_kz.application.main import run as applicationRun
 from flow_types.base import Type
 from common.sqlite import safe_execute
+from browser.browser import Browser
 
 class ApplicationType(Type):
+    def browser(self):
+        return Browser(True)
+
     def label(self)->str:
         return 'Ходатайство'
 

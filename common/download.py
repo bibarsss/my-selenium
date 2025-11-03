@@ -3,7 +3,7 @@ import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-
+import time
 def downloadByLabel(browser, link_text: str, download_dir: str, filename: str = None) -> str:
     os.makedirs(download_dir, exist_ok=True)
 
@@ -44,3 +44,30 @@ def downloadByLabel(browser, link_text: str, download_dir: str, filename: str = 
             f.write(chunk)
 
     return filepath
+
+def downloadByButtonLabel(browser, button_value: str, download_dir: str, timeout: int = 30) -> str:
+    os.makedirs(download_dir, exist_ok=True)
+
+    # Find button by value
+    button = WebDriverWait(browser.driver, timeout).until(
+        EC.element_to_be_clickable((By.XPATH, f"//input[@type='submit' and @value='{button_value}']"))
+    )
+
+    # Track existing files before click
+    existing_files = set(os.listdir(download_dir))
+
+    # Click the button
+    button.click()
+
+    # Wait until a new file appears in the download directory
+    end_time = time.time() + timeout
+    while time.time() < end_time:
+        current_files = set(os.listdir(download_dir))
+        new_files = current_files - existing_files
+        if new_files:
+            # We found a new file downloaded
+            filename = new_files.pop()
+            return os.path.join(download_dir, filename)
+        time.sleep(0.5)
+
+    raise TimeoutError(f"No new file appeared in '{download_dir}' within {timeout} seconds")

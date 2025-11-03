@@ -9,12 +9,26 @@ import os
 import platform
 
 class Browser:
-    def __init__(self):
+    def __init__(self, with_gui = False):
+        self.download_dir = os.path.join(os.getcwd(), "downloads")
+        os.makedirs(self.download_dir, exist_ok=True)
+        
         options = Options()
-        options.add_argument("--headless")       # Run without GUI
-        options.add_argument("--disable-gpu")    # Recommended for headless
-        options.add_argument("--disable-dev-shm-usage")  # Fixes some crashes
         options.page_load_strategy = "normal"
+
+        prefs = {
+                    "download.default_directory": self.download_dir,
+                    "download.prompt_for_download": False,
+                    "download.directory_upgrade": True,
+                }
+
+        options.add_experimental_option("prefs", prefs)
+        if not with_gui:
+            options.add_argument("--headless=new")
+            options.add_argument("--headless")       # Run without GUI
+            options.add_argument("--disable-gpu")    # Recommended for headless
+            options.add_argument("--disable-dev-shm-usage")  # Fixes some crashes
+
         system = platform.system()
         if system == "Windows":
             driver_path = os.path.join(os.getcwd(), "chromedriver.exe")  # put chromedriver.exe in your project folder

@@ -14,12 +14,18 @@ def run():
         print("Файл config.txt не найден!")
         return
 
-    options = ", ".join(f"{k} - {v().label()}" for k, v in types.items())
-    full_options = options + ", 111 - Перезапуск если не получил файл"
+    options = ",\n".join(f"{k} -> {v().label()}" for k, v in types.items())
+    full_options = options + ",\n111 -> Перезапуск если не получил файл"
     try:
-        type = int(input(f"Введите тип флоу: ({full_options}): "))
+        print('==========================')
+        print(full_options)
+        print('==========================')
+        type = int(input(f"Введите тип флоу: "))
         if str(type) == '111':
-            type = int(input(f"Введите тип флоу для перезапуска: ({options}): "))
+            print('==========================')
+            print(options)
+            print('==========================')
+            type = int(input(f"Введите тип флоу перезапуска для получение обработанных строк: "))
             type = types[type](cfg)
             type.save_to_excel()
             return
@@ -30,16 +36,16 @@ def run():
     except Exception as e:
         print("Неправильный тип флоу!")
         return
-
     # migration
     type = types[type](cfg)
     type.migration()
-    
+
     # db + insert
     wb = load_workbook(cfg.get('file'))
     sheet = wb.active
     rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
 
+    print('migr')
     connection = sqlite3.connect(cfg.get('db_name') )
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
@@ -48,6 +54,7 @@ def run():
 
     connection.commit()        
 
+    print('migr')
     ids = [r[0] for r in cursor.execute(f"SELECT id FROM {type.table_name()} WHERE status != ?", ('success',))]
     connection.close()
 
@@ -66,11 +73,10 @@ def run():
     type.save_to_excel()
 
 def process_rows(ids, worker_id, type: Type):
-    from browser.browser import Browser
     from office_sud_kz.auth import auth
 
     print(f"[Worker {worker_id}] starting...")
-    browser = Browser()
+    browser = type.browser()
 
     while True:
         try:

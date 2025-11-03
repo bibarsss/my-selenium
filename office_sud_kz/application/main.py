@@ -5,7 +5,7 @@ from browser.browser import Browser
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-from . import step0, step1, step2
+from . import step0, step1, step2, step3
 
 import time
 
@@ -29,3 +29,6 @@ def run(browser: Browser, data, worker_id):
     
     print(f'[Worker {worker_id}] step 2')
     step2.run(browser, data)
+
+    print(f'[Worker {worker_id}] step 3')
+    step3.run(browser, data)

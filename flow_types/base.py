@@ -1,11 +1,10 @@
 import sqlite3
-from common.sqlite import safe_execute
 from globals import Config
 from abc import ABC, abstractmethod
 import os
 import shutil
 from openpyxl import load_workbook
-
+from browser.browser import Browser
 
 class Type(ABC):
     def __init__(self, cfg: Config = None):
@@ -38,6 +37,9 @@ class Type(ABC):
     @abstractmethod
     def run(self, browser, connection, row, worker_id) -> None:
         pass
+
+    def browser(self):
+        return Browser()
 
     def save_to_excel(self):
         print('Сохраняем на эксель файл...')

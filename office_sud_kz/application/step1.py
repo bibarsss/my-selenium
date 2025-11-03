@@ -22,6 +22,8 @@ def run(browser: Browser, data)->bool:
     if not Path(file_path).exists():
         raise Exception("File not found! " + file_path)
 
+    print(file_path)
+    print(os.path.abspath(file_path))
     parsed = parse(read(os.path.abspath(file_path)))
     textByLabel(browser, 'Текст ходатайства', parsed)
 
