@@ -45,7 +45,6 @@ def run():
     sheet = wb.active
     rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
 
-    print('migr')
     connection = sqlite3.connect(cfg.get('db_name') )
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
@@ -54,7 +53,6 @@ def run():
 
     connection.commit()        
 
-    print('migr')
     ids = [r[0] for r in cursor.execute(f"SELECT id FROM {type.table_name()} WHERE status != ?", ('success',))]
     connection.close()
 
