@@ -60,14 +60,14 @@ def downloadByButtonLabel(browser, button_value: str, download_dir: str, timeout
     button.click()
 
     # Wait until a new file appears in the download directory
-    end_time = time.time() + timeout
-    while time.time() < end_time:
-        current_files = set(os.listdir(download_dir))
-        new_files = current_files - existing_files
-        if new_files:
-            # We found a new file downloaded
-            filename = new_files.pop()
-            return os.path.join(download_dir, filename)
-        time.sleep(0.5)
+    # end_time = time.time() + timeout
+    # while time.time() < end_time:
+    #     current_files = set(os.listdir(download_dir))
+    #     new_files = current_files - existing_files
+    #     if new_files:
+    #         # We found a new file downloaded
+    #         filename = new_files.pop()
+    #         return os.path.join(download_dir, filename)
+    #     time.sleep(0.5)
 
-    raise TimeoutError(f"No new file appeared in '{download_dir}' within {timeout} seconds")
+    # raise TimeoutError(f"No new file appeared in '{download_dir}' within {timeout} seconds")

@@ -3,8 +3,7 @@ from browser.browser import Browser
 import time
 
 def run(browser: Browser, data)->bool:
-    print('Скачиваем последний файл')
     downloadByButtonLabel(browser, "Скачать талон об отправке", data['dir'])
-    
-    print('Zakonchil последний файл')
+    browser.main_office_sud_kz()
+    browser.wait_for_loader_done()
     

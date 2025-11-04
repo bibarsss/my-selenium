@@ -12,6 +12,7 @@ from pathlib import Path
 from common.input_upload import uploadFile
 import os
 import re
+import time
 
 def run(browser: Browser, data)->bool:
     while not isSelectedByLabel(browser, "Вид документа по делу", "PETITION"):
@@ -52,9 +53,17 @@ def run(browser: Browser, data)->bool:
         selectByLabel(browser, "Судебный орган", sudValue)
         browser.wait_for_loader_done()
         
-    while not browser.htmlHasText("Предпросмотр электронного бланка"):
+    clicked = False
+    for i in range(5):
+        if browser.htmlHasText("Предпросмотр электронного бланка"):
+            clicked = True
+            break
+    
         clickByText(browser, 'a' ,'Далее')
         browser.wait_for_loader_done()
+    
+    if not clicked:
+        raise Exception('Не смог заполнить все поля в 1 стадии')
 
 def parse(text):
     cleaned = text.strip()

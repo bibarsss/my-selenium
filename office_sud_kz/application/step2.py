@@ -4,3 +4,6 @@ import time
 
 def run(browser: Browser, data)->bool:
     downloadByLabel(browser, "Предпросмотр электронного бланка", data['dir'], "blank.pdf")
+    
+    while not browser.htmlHasText('Ходатайство успешно отправлено'):
+        time.sleep(2)
