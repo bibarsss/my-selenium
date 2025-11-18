@@ -1,9 +1,5 @@
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from common.input_select import selectByLabel, selectByLabelOnModal, isSelectedByLabel, isSelectedByLabelOnModal
-from common.button import clickByValue, clickByText, clickButtonByRow, clickFooterButtonByValue
-from common.input_check import checkboxByTextValue
+from common.input_select import selectByLabel, isSelectedByLabel 
+from common.button import clickByText
 from common.input_text import textByLabel 
 from browser.browser import Browser
 from common.podsudnost import getPodsudnostValue
