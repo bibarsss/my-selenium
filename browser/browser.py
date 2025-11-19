@@ -23,6 +23,7 @@ class Browser:
                 }
 
         options.add_experimental_option("prefs", prefs)
+
         if not with_gui:
             options.add_argument("--headless=new")
             options.add_argument("--headless")       # Run without GUI

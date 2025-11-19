@@ -36,6 +36,7 @@ def run():
     except Exception as e:
         print("Неправильный тип флоу!")
         return
+
     # migration
     type = types[type](cfg)
     type.migration()

@@ -1,22 +1,8 @@
-from common.sqlite import safe_execute
-import sqlite3
+from common.podsudnost import getPodsudnostValue as s
 
-connection = sqlite3.connect('database_sud.db') 
-connection.row_factory = sqlite3.Row
+a = "Суд №2 города Уральска  Западно-Казахстанской области"
 
-safe_execute(connection, f'''UPDATE iskstatus 
-                SET status = ?, 
-                status_text = ?, 
-                result = ?,
-                result_date = ?,
-                result_sud_name = ?,
-                result_number = ?
-                WHERE id = ?
-                ''', 
-                ('success', 
-                '', 
-               '', 
-                'result_date',
-                'result_sud_name',
-                'result_number',
-                 '2'),)
+a = [1,2,3,4]
+b = [3,4,5]
+print(a+b)
+print(s(a))

@@ -1,49 +1,44 @@
-from pathlib import Path
+# Cкачиванием файлов с ск
 import sqlite3
-from office_sud_kz.iskstatus.main import run as iskstatusRun
+from office_sud_kz.downloadIspListByTalon.main import run as runMain 
 from flow_types.base import Type
 from common.sqlite import safe_execute
+from browser.browser import Browser
 
-class IskstatusType(Type):
+class DownloadIspListByTalonType(Type):
+    def browser(self):
+        return Browser(with_gui=False)
+
     def label(self)->str:
-        return 'ИСК - проверка статуса'
+        return 'Cкачиванием файлов с ск'
 
     def table_name(self)->str:
-        return 'iskstatus'
+        return 'download_isp_list_by_talon'
 
     def excel_map(self):
         return {
             'status': 'excel_status',
             'status_text': 'excel_status_text',
-            'result': 'iskstatus_excel_result', 
-            'result_date': 'iskstatus_excel_result_date', 
-            'result_sud_name': 'iskstatus_excel_result_sud_name', 
-            'result_number': 'iskstatus_excel_result_number', 
         }
 
     def migration(self):
         connection = sqlite3.connect(self.cfg.get('db_name'))
-
         cursor = connection.cursor()
         cursor.execute(f'''
             DROP TABLE IF EXISTS {self.table_name()} 
             ''')
+
         cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
                         excel_line_number INTEGER,
-                        talon TEXT NOT NULL, 
-                        result TEXT, 
-                        result_date TEXT,
-                        result_sud_name TEXT, 
-                        result_number TEXT,
+                        talon TEXT, 
                         status TEXT,
                         status_text TEXT                            
                     )
                             ''')
         connection.commit()        
         connection.close()
-
 
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
         def safe_get(column_name: str) -> str:
@@ -54,7 +49,7 @@ class IskstatusType(Type):
                 return ""
 
         data = {
-            "talon": str(row[self.cfg.index('iskstatus_excel_talon')].value),
+            "talon": str(row[self.cfg.index('download_ispol_list_excel_talon')].value),
             "excel_line_number": i,
             "status": safe_get('excel_status'),
             "status_text": safe_get('excel_status_text'),
@@ -71,7 +66,7 @@ class IskstatusType(Type):
 
         cursor.execute(query, data)
 
-    def _get_data(self, row):
+    def _get_data(self, row) -> dict | str:
         data = {
             "talon": row['talon'],
         }
@@ -79,24 +74,21 @@ class IskstatusType(Type):
         return data 
 
     def run(self, browser, connection, row, worker_id):
-        data = self._get_data(row)
+        data = self._get_data(row) 
+
         try:
-            parsed_data = iskstatusRun(browser, data, worker_id)
+            runMain(browser, data, worker_id)
             safe_execute(connection, f'''UPDATE {self.table_name()} 
                         SET status = ?, 
-                        status_text = ?, 
-                        result = ?,
-                        result_date = ?,
-                        result_sud_name = ?,
-                        result_number = ?
+                        status_text = ? 
                         WHERE id = ?
                         ''', 
                         ('success', 
                         '', 
-                        parsed_data['result'],
-                        parsed_data['result_date'],
-                        parsed_data['result_sud_name'],
-                        parsed_data['result_number'],
                         row['id']),)
         except Exception as e:
-            safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
+            safe_execute(connection, f'''UPDATE {self.table_name()} 
+                        SET status = ?, 
+                        status_text = ? 
+                        WHERE id = ?''', 
+                        ('error', str(e), row['id']),)
