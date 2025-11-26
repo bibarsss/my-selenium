@@ -9,7 +9,7 @@ import unicodedata
 
 class SpType(Type):
     def browser(self):
-        return Browser(True)
+        return Browser(False)
 
     def label(self)->str:
         return 'Заявление о вынесении судебного приказа'
