@@ -1,3 +1,4 @@
+import time
 from common.input_select import selectByLabel, isSelectedByLabel 
 from common.button import clickByText
 from common.input_text import textByLabel 
@@ -14,15 +15,6 @@ def run(browser: Browser, data)->bool:
         selectByLabel(browser, "Вид документа по делу", "PETITION")
         browser.wait_for_loader_done()
 
-    file_path = data['file_path']
-    if not Path(file_path).exists():
-        raise Exception("File not found! " + file_path)
-
-    parsed = parse(read(os.path.abspath(file_path)))
-    textByLabel(browser, 'Текст ходатайства', parsed)
-
-    uploadFile(browser, file_path, "selectRequiredScanUploader")
-    browser.wait_for_loader_done()
 
     textByLabel(browser, 'Адрес', data['address'])
     textByLabel(browser, 'Номер дела', data['nomer_dela'])
@@ -45,7 +37,17 @@ def run(browser: Browser, data)->bool:
         browser.wait_for_loader_done()
         selectByLabel(browser, "Судебный орган", sudValue)
         browser.wait_for_loader_done()
-        
+
+    file_path = data['file_path']
+    if not Path(file_path).exists():
+        raise Exception("File not found! " + file_path)
+
+    parsed = parse(read(os.path.abspath(file_path)))
+    textByLabel(browser, 'Текст ходатайства', parsed)
+
+    uploadFile(browser, file_path, "selectRequiredScanUploader")
+    browser.wait_for_loader_done()
+
     clicked = False
     for i in range(5):
         if browser.htmlHasText("Предпросмотр электронного бланка"):

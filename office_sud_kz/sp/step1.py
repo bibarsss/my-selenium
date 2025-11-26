@@ -15,6 +15,32 @@ def run(browser: Browser, data)->bool:
         browser.wait_for_loader_done()
 
     browser.refresh()
+
+# должник 
+    while not isModalOpened(browser, 'selectSideModalDialog'):
+        clickByText(browser, 'button', 'Добавить участника процесса')
+        browser.wait_for_loader_done()
+
+    divId = "fizModalDialog"
+    while not isModalOpened(browser, divId):
+        while not isSelectedByLabelOnModal(browser, "Сторона процесса", "2"):
+            selectByLabelOnModal(browser, "Сторона процесса", "2")
+            browser.wait_for_loader_done()
+
+        clickByValue(browser, "Далее")
+        browser.wait_for_loader_done()
+
+    while not verifyModalRowValue(browser, divId, 3, data['iin_dolzhnik']): 
+        textModalByRow(browser, divId, 3, data['iin_dolzhnik'])
+        browser.wait_for_loader_done()
+        clickButtonByRow(browser, divId, 3)
+        browser.wait_for_loader_done()
+
+    clickFooterButtonByValue(browser, divId, "Сохранить")
+    browser.wait_for_loader_done()
+
+    browser.refresh()
+
 # юрлицо взыскатель 
     while not isModalOpened(browser, 'selectSideModalDialog'):
         clickByText(browser, 'button', 'Добавить участника процесса')
@@ -75,30 +101,6 @@ def run(browser: Browser, data)->bool:
     clickFooterButtonByValue(browser, divId, "Сохранить")
     browser.wait_for_loader_done()
     
-    browser.refresh()
-# должник 
-    while not isModalOpened(browser, 'selectSideModalDialog'):
-        clickByText(browser, 'button', 'Добавить участника процесса')
-        browser.wait_for_loader_done()
-
-    divId = "fizModalDialog"
-    while not isModalOpened(browser, divId):
-        while not isSelectedByLabelOnModal(browser, "Сторона процесса", "2"):
-            selectByLabelOnModal(browser, "Сторона процесса", "2")
-            browser.wait_for_loader_done()
-
-        clickByValue(browser, "Далее")
-        browser.wait_for_loader_done()
-
-    while not verifyModalRowValue(browser, divId, 3, data['iin_dolzhnik']): 
-        textModalByRow(browser, divId, 3, data['iin_dolzhnik'])
-        browser.wait_for_loader_done()
-        clickButtonByRow(browser, divId, 3)
-        browser.wait_for_loader_done()
-
-    clickFooterButtonByValue(browser, divId, "Сохранить")
-    browser.wait_for_loader_done()
-
     browser.refresh()
 
     podsudnost = getPodsudnostValue(data['podsudnost'])
