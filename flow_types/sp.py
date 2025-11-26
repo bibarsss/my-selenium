@@ -34,10 +34,12 @@ class SpType(Type):
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
                         excel_line_number INTEGER,
+                        number TEXT NOT NULL, 
                         podsudnost TEXT, 
                         iin_dolzhnik TEXT NOT NULL, 
                         summaIska TEXT NOT NULL, 
                         powlina TEXT NOT NULL, 
+                        sp_file_realname TEXT NOT NULL,
                         status TEXT,
                         status_text TEXT                            
                     )
@@ -55,10 +57,12 @@ class SpType(Type):
 
         data = {
             "excel_line_number": i,
+            "number": safe_get('sp_excel_number'),
             'podsudnost': safe_get('sp_excel_podsudnost'),
             "iin_dolzhnik": safe_get('sp_excel_iin_dolzhnik'),
             "summaIska": safe_get('sp_excel_summa_iska'),
             "powlina": safe_get('sp_excel_powlina'),
+            "sp_file_realname": safe_get('sp_excel_file_name') + ".pdf",
             "status": safe_get('excel_status'),
             "status_text": safe_get('excel_status_text'),
             }
@@ -70,11 +74,11 @@ class SpType(Type):
         cursor.execute(query, data)
 
     def _get_data(self, row) -> dict | str:
-        iin = str(row['iin_dolzhnik']).zfill(12)
+        number = row['number']
 
         dir = None
         for path in Path(".").rglob("*.pdf"):
-            if iin in unicodedata.normalize("NFC", path.name):
+            if number in unicodedata.normalize("NFC", path.name):
                 dir = path.parent
                 break
 
@@ -83,9 +87,10 @@ class SpType(Type):
 
         data = {
             "iin": str(self.cfg.get('iin')).zfill(12),
-            "iin_dolzhnik": iin,
+            "iin_dolzhnik": str(row['iin_dolzhnik']).zfill(12),
             "phone": self.cfg.get('phone'),
             "bin": self.cfg.get('bin'),
+            "number": number,
             "podsudnost": row['podsudnost'],
             "address": self.cfg.get('address'),
             "detail": self.cfg.get('detail'),
@@ -93,15 +98,10 @@ class SpType(Type):
             "powlina": row['powlina'],
             "summaIska": row['summaIska'],
             "powlina_file_path": str(dir / self.cfg.get('sp_powlina_file_name')),
+            "sp_file_path": str(dir / self.cfg.get('sp_file_name')),
+            "sp_file_realpath": str(dir / row['sp_file_realname']),
         }
 
-        # data = {
-        #     "summaIska": row['summaIska'],
-        #     "powlina": row['powlina'],
-        #     "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),
-        #     "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
-        #     "isk_file_realpath": str(dir / row['isk_file_realname']),
-        # }
         return data 
 
     def run(self, browser, connection, row, worker_id):

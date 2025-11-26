@@ -1,8 +1,8 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from . import step0, step1
 from browser.browser import Browser
+from . import step0, step1, step2, step3, step4
 
 def run(browser: Browser, data, worker_id):
     browser.wait_for_loader_done()
@@ -22,14 +22,14 @@ def run(browser: Browser, data, worker_id):
     print(f'[Worker {worker_id}] step 1')
     step1.run(browser, data)
     
-    # print(f'[Worker {worker_id}] step 2')
-    # step2.run(browser, data)
+    print(f'[Worker {worker_id}] step 2')
+    step2.run(browser, data)
 
-    # print(f'[Worker {worker_id}] step 3')
-    # step3.run(browser, data)
+    print(f'[Worker {worker_id}] step 3')
+    step3.run(browser, data)
 
-    # print(f'[Worker {worker_id}] step 4')
-    # step4.run(browser, data)
+    print(f'[Worker {worker_id}] step 4')
+    step4.run(browser, data)
     
     return
 
