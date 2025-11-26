@@ -74,11 +74,11 @@ class IskType(Type):
         cursor.execute(query, data)
 
     def _get_data(self, row) -> dict | str:
-        iin = str(row['iin_otvet4ik']).zfill(12)
+        number = row['number']
 
         dir = None
         for path in Path(".").rglob("*.pdf"):
-            if iin in unicodedata.normalize("NFC", path.name):
+            if number in unicodedata.normalize("NFC", path.name):
                 dir = path.parent
                 break
 
@@ -91,11 +91,11 @@ class IskType(Type):
             "phone": self.cfg.get('phone'),
             "address": self.cfg.get('address'),
             "detail": self.cfg.get('detail'),
-            "number": row['number'] ,
+            "number": number,
             "dir": str(dir),
             "phone_otvet4ik": row['phone_otvet4ik'],
             "podsudnost": row['podsudnost'],
-            "iin_otvet4ik": iin,
+            "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
             "summaIska": row['summaIska'],
             "powlina": row['powlina'],
             "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),

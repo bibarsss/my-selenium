@@ -388,8 +388,6 @@ oblastMap = {
 def getPodsudnostValue(podsudnost: str)->dict:
     podsudnostNormalized = normalize_text(podsudnost.lower())
     for oblast in oblastMap:
-        if oblast != 'Западно-Казахстанская область':
-            continue
         for sud in oblastMap[oblast]['sudebnieOrgany']:
             sudNormalized = normalize_text(sud.lower())
             if podsudnostNormalized in sudNormalized:
