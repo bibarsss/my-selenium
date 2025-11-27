@@ -28,21 +28,13 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      # 4️⃣ Debug: check installed packages
-      - name: Verify installed packages
-        run: pip freeze
-
-      # 5️⃣ Build EXE with PyInstaller spec file
+      # 4️⃣ Build EXE with auto-generated spec
       - name: Build EXE
         run: |
-          pyinstaller main.spec
+          pyinstaller --onefile main.py
           dir dist
 
-      # 6️⃣ Test run EXE inside CI (optional, but recommended)
-      # - name: Test EXE
-      #   run: dist\main.exe || exit 1
-
-      # 7️⃣ Upload the EXE as an artifact
+      # 5️⃣ Upload built EXE
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
