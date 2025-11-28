@@ -29,18 +29,8 @@ def run(browser: Browser, data):
         raise Exception("По талону запись не найдена!")        
 
     clickByIndex(browser, "div.case-item-container", 0)
-    while not htmlHasText(browser, 'Динамика хода рассмотрения дела'):
+    while not browser.htmlHasText('Динамика хода рассмотрения дела'):
         time.sleep(1)
-        
-def htmlHasText(browser: Browser, text: str) -> bool:
-    xpath = f'//*[contains(normalize-space(.), "{text.strip()}")]'
-    try:
-        WebDriverWait(browser.driver, 0.1).until(
-            EC.presence_of_element_located((By.XPATH, xpath))
-        )
-        return True
-    except Exception:
-        return False
 
 def has_result(browser) -> bool:
     try:

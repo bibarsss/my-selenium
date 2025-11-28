@@ -1,7 +1,3 @@
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from common.input_select import selectByLabel, isSelectedByLabel
 from common.input_text import textByLabel
 from common.button import clickByText
 from common.input_upload import uploadFile, uploadAllFilesInDirectory
@@ -10,6 +6,8 @@ from browser.browser import Browser
 import re
 import os
 from pathlib import Path
+
+from globals import RETRY_COUNT
 
 def run(browser: Browser, data)->bool:
     isk_file_common = Path(data['isk_file_path'])
@@ -31,18 +29,15 @@ def run(browser: Browser, data)->bool:
     uploadAllFilesInDirectory(browser, data['dir'], 'selectFileUploader')
     browser.wait_for_loader_done()
 
-    while not htmlHasText(browser, "Предпросмотр электронного бланка"):
+    c = 0
+    while not browser.htmlHasText("Предпросмотр электронного бланка"):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step0")
         clickByText(browser, 'a' ,'Далее')
         browser.wait_for_loader_done()
 
     return True
-
-def htmlHasText(browser: Browser, text: str) -> bool:
-    try:
-        WebDriverWait(browser.driver, 0.1).until(EC.presence_of_element_located((By.XPATH, f'//*[contains(text(), "{text}")]')))
-        return True
-    except:
-        return False
 
 def parse_claim(text: str):
     result = {}

@@ -1,5 +1,9 @@
-from common.podsudnost import getPodsudnostValue as s
+    #     cc = 0
+    #         cc += 1
+    #         if cc == RETRY_COUNT:
+    #             raise Exception("Ошибка в step0")
 
-a = "Алатауский районный суд города Алматы"
-
-print(s(a))
+    # c = 0
+    #     c += 1
+    #     if c == RETRY_COUNT:
+    #         raise Exception("Ошибка в step0")

@@ -1,3 +1,5 @@
+RETRY_COUNT = 6
+
 class Data:
     def __init__(self):
         self.data = {}
