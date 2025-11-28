@@ -11,3 +11,11 @@ types = {
     4: SpType,
     5: DownloadIspListByTalonType
 }   
+
+excelTypes = {
+    1: IskType,
+    2: IskstatusType,
+    3: ApplicationType,
+    4: SpType,
+    5: DownloadIspListByTalonType
+}

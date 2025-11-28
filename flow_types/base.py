@@ -42,6 +42,9 @@ class Type(ABC):
     def browser(self):
         return Browser()
 
+    def can_get_excel_result(self):
+        return True 
+
     def start(self):
         def chunk_list(lst, n):
             k, m = divmod(len(lst), n)

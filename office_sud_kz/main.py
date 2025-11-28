@@ -1,9 +1,5 @@
-from multiprocessing import Process
-from openpyxl import load_workbook
 import globals
-import sqlite3
-from flow_types.available_types import types 
-from flow_types.base import Type
+from flow_types.available_types import types, excelTypes
 
 def run():
     print('Открываем файл config.txt...')
@@ -23,10 +19,16 @@ def run():
         type = int(input(f"Введите тип флоу: "))
         if str(type) == '111':
             print('==========================')
+            options = ",\n".join(f"{k} -> {v().label()}" for k, v in excelTypes.items())
             print(options)
             print('==========================')
             type = int(input(f"Введите тип флоу перезапуска для получение обработанных строк: "))
-            type = types[type](cfg)
+
+            if type not in excelTypes.keys():
+                print("Неправильный тип флоу: ", type)
+                return
+
+            type = excelTypes[type](cfg)
             type.save_to_excel()
             return
 
