@@ -10,7 +10,7 @@ def run(browser: Browser, data)->bool:
     while not isSelectedByLabel(browser, 'КБК', '2'):
         c += 1
         if c == RETRY_COUNT:
-            raise Exception("Ошибка в step0")
+            raise Exception("Ошибка в step2")
         selectByLabel(browser, 'КБК', '2')
         browser.wait_for_loader_done()
 
@@ -24,7 +24,7 @@ def run(browser: Browser, data)->bool:
     while not browser.htmlHasText("Данные для электронного бланка"):
         c += 1
         if c == RETRY_COUNT:
-            raise Exception("Ошибка в step0")
+            raise Exception("Ошибка в step2")
         clickByText(browser, 'a' ,'Далее')
         browser.wait_for_loader_done()
 

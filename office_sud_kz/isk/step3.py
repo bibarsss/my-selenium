@@ -33,7 +33,7 @@ def run(browser: Browser, data)->bool:
     while not browser.htmlHasText("Предпросмотр электронного бланка"):
         c += 1
         if c == RETRY_COUNT:
-            raise Exception("Ошибка в step0")
+            raise Exception("Ошибка в step3")
         clickByText(browser, 'a' ,'Далее')
         browser.wait_for_loader_done()
 
