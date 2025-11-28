@@ -1,12 +1,14 @@
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 from common.input_select import selectByLabel, isSelectedByLabel
 from common.button import clickByValue
 from browser.browser import Browser
+from globals import RETRY_COUNT
 
 def run(browser: Browser, data):
+    c = 0
     while not isSelectedByLabel(browser, "Тип производства", "CIVIL") or not isSelectedByLabel(browser, "Инстанция", "FIRSTINSTANCE") or not isSelectedByLabel(browser, "Тип документа", "1000"):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step0")
         selectByLabel(browser, "Тип производства", "CIVIL")
         browser.wait_for_loader_done()
         selectByLabel(browser, "Инстанция", "FIRSTINSTANCE")

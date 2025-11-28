@@ -5,10 +5,15 @@ from common.button import clickByValue, clickByText, clickButtonByRow, clickFoot
 from common.input_text import textModalByRow
 from browser.browser import Browser
 from common.podsudnost import getPodsudnostValue
+from globals import RETRY_COUNT
 
 def run(browser: Browser, data)->bool:
+    c = 0
     while not isSelectedByLabel(browser, "Характер заявления", "1") \
             or not isSelectedByLabel(browser, "Категория дела", "151"):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         selectByLabel(browser, "Категория дела", "151")
         browser.wait_for_loader_done()
         selectByLabel(browser, "Характер заявления", "1")
@@ -17,20 +22,37 @@ def run(browser: Browser, data)->bool:
     browser.refresh()
 
 # должник 
+    c = 0
     while not isModalOpened(browser, 'selectSideModalDialog'):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         clickByText(browser, 'button', 'Добавить участника процесса')
         browser.wait_for_loader_done()
 
     divId = "fizModalDialog"
+
+    c = 0
     while not isModalOpened(browser, divId):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
+        cc = 0
         while not isSelectedByLabelOnModal(browser, "Сторона процесса", "2"):
+            cc += 1
+            if cc == RETRY_COUNT:
+                raise Exception("Ошибка в step1")
             selectByLabelOnModal(browser, "Сторона процесса", "2")
             browser.wait_for_loader_done()
 
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
+    c = 0
     while not verifyModalRowValue(browser, divId, 3, data['iin_dolzhnik']): 
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         textModalByRow(browser, divId, 3, data['iin_dolzhnik'])
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
@@ -42,23 +64,40 @@ def run(browser: Browser, data)->bool:
     browser.refresh()
 
 # юрлицо взыскатель 
+    c = 0
     while not isModalOpened(browser, 'selectSideModalDialog'):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         clickByText(browser, 'button', 'Добавить участника процесса')
         browser.wait_for_loader_done()
 
     divId = "jurModalDialog"
+    c = 0
     while not isModalOpened(browser, divId):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
+
+        cc = 0
         while not isSelectedByLabelOnModal(browser, "Тип лица", "true"):
+            cc += 1
+            if cc == RETRY_COUNT:
+                raise Exception("Ошибка в step1")
+
             selectByLabelOnModal(browser, "Тип лица", "true")
             browser.wait_for_loader_done()
 
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
+    c = 0
     while not verifyModalRowValue(browser, divId, 4, data['bin']) \
         or not verifyModalRowValue(browser, divId, 7, data['address']) \
         or not verifyModalRowValue(browser, divId, 8, data['detail']):
-
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         textModalByRow(browser, divId, 4, data['bin'])
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 4)
@@ -73,15 +112,29 @@ def run(browser: Browser, data)->bool:
 
     browser.refresh()
 # представитель
+    c = 0
     while not isModalOpened(browser, 'selectSideModalDialog'):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         clickByText(browser, 'button', 'Добавить участника процесса')
         browser.wait_for_loader_done()
 
     browser.wait_for_loader_done()
     divId = "fizModalDialog"
     
+    c = 0
     while not isModalOpened(browser, divId):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
+
+        cc = 0
         while not isSelectedByLabelOnModal(browser, "Сторона процесса", "5"):
+            cc += 1
+            if cc == RETRY_COUNT:
+                raise Exception("Ошибка в step1")
+
             selectByLabelOnModal(browser, "Сторона процесса", "5")
             browser.wait_for_loader_done()
 
@@ -89,8 +142,12 @@ def run(browser: Browser, data)->bool:
         clickByValue(browser, "Далее")
         browser.wait_for_loader_done()
 
+    c = 0
     while not verifyModalRowValue(browser, divId, 3, data['iin']) \
         and not verifyModalRowValue(browser, divId, 9, data['phone']):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         textModalByRow(browser, divId, 3, data['iin'])  
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
@@ -111,7 +168,11 @@ def run(browser: Browser, data)->bool:
     if not bool(sudValue) or not bool(sudName):
         raise Exception('Подсудность в справочнике не найдены')
     
+    c = 0
     while not isSelectedByLabel(browser, "Область (столица, город республиканского значения)", oblastValue) or not isSelectedByLabel(browser, "Судебный орган", sudValue):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         selectByLabel(browser, "Область (столица, город республиканского значения)", oblastValue)
         browser.wait_for_loader_done()
         if not browser.htmlHasText(sudName):
@@ -121,7 +182,11 @@ def run(browser: Browser, data)->bool:
         selectByLabel(browser, "Судебный орган", sudValue)
         browser.wait_for_loader_done()
 
+    c = 0
     while not browser.htmlHasText("Информация об оплате"):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1")
         clickByText(browser, 'a' ,'Далее')
         browser.wait_for_loader_done()
 
