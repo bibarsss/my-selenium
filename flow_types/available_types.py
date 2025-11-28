@@ -3,13 +3,16 @@ from flow_types.iskstatus import IskstatusType
 from flow_types.application import ApplicationType
 from flow_types.downloadIspListByTalon import DownloadIspListByTalonType 
 from flow_types.sp import SpType
+from flow_types.moveBy2Subfolder import MoveBy2SubfolderType
 
 types = {
     1: IskType,
     2: IskstatusType,
     3: ApplicationType,
     4: SpType,
-    5: DownloadIspListByTalonType
+    5: DownloadIspListByTalonType,
+    # 6: MoveBy2SubfolderType,
+    # 7: 
 }   
 
 excelTypes = {

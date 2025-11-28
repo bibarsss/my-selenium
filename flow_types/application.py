@@ -3,11 +3,11 @@ from pathlib import Path
 import unicodedata
 import sqlite3
 from office_sud_kz.application.main import run as applicationRun
-from flow_types.base import Type
+from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
 from browser.browser import Browser
 
-class ApplicationType(Type):
+class ApplicationType(WithExcelType):
     def browser(self):
         return Browser(True)
 

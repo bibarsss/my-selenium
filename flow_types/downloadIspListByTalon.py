@@ -1,11 +1,11 @@
 # Cкачиванием файлов с ск
 import sqlite3
 from office_sud_kz.downloadIspListByTalon.main import run as runMain 
-from flow_types.base import Type
+from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
 from browser.browser import Browser
 
-class DownloadIspListByTalonType(Type):
+class DownloadIspListByTalonType(WithExcelType):
     def browser(self):
         return Browser(with_gui=False)
 

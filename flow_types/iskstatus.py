@@ -1,10 +1,10 @@
 from pathlib import Path
 import sqlite3
 from office_sud_kz.iskstatus.main import run as iskstatusRun
-from flow_types.base import Type
+from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
 
-class IskstatusType(Type):
+class IskstatusType(WithExcelType):
     def label(self)->str:
         return 'ИСК - проверка статуса'
 

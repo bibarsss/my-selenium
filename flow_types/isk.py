@@ -3,9 +3,9 @@ import unicodedata
 import sqlite3
 from common.sqlite import safe_execute
 from office_sud_kz.isk.main import run as iskRun
-from flow_types.base import Type
+from flow_types.baseWithExcel import WithExcelType
 
-class IskType(Type):
+class IskType(WithExcelType):
     def label(self)->str:
         return 'ИСК'
 
