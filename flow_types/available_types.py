@@ -4,6 +4,7 @@ from flow_types.application import ApplicationType
 from flow_types.downloadIspListByTalon import DownloadIspListByTalonType 
 from flow_types.sp import SpType
 from flow_types.moveBy2Subfolder import MoveBy2SubfolderType
+from flow_types.moveOneFile import MoveOneFileType
 
 types = {
     1: IskType,
@@ -11,8 +12,8 @@ types = {
     3: ApplicationType,
     4: SpType,
     5: DownloadIspListByTalonType,
-    # 6: MoveBy2SubfolderType,
-    # 7: 
+    6: MoveBy2SubfolderType,
+    7: MoveOneFileType 
 }   
 
 excelTypes = {

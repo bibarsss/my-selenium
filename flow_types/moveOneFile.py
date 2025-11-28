@@ -1,14 +1,16 @@
 from pathlib import Path
+import shutil
 import sqlite3
 from flow_types.baseWithExcel import WithExcelType
 import re
+import unicodedata
 
-class MoveBy2SubfolderType(WithExcelType):
+class MoveOneFileType(WithExcelType):
     def label(self)->str:
-        return 'Переместить папки через 2 подпапки'
+        return 'Перемещение определенного файла'
 
     def table_name(self)->str:
-        return 'moveby2subfolder'
+        return 'polozhit_odin_file'
 
     def excel_map(self):
         return {}
@@ -27,9 +29,7 @@ class MoveBy2SubfolderType(WithExcelType):
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
                         excel_line_number INTEGER,
-                        search_text TEXT, 
-                        sud_folder_name TEXT, 
-                        client_folder_name TEXT,
+                        search_text TEXT,
                         status TEXT DEFAULT '',
                         status_text TEXT DEFAULT ''                           
                     )
@@ -46,9 +46,7 @@ class MoveBy2SubfolderType(WithExcelType):
                 return ""
 
         data = {
-            'search_text': safe_get('moveby2subfolder_excel_search_text'),
-            'sud_folder_name': safe_get('moveby2subfolder_excel_sud_folder_name'),
-            'client_folder_name': safe_get('moveby2subfolder_excel_client_folder_name'),
+            'search_text': safe_get('moveonefile_excel_search_text'),
             "excel_line_number": i,
             }
         
@@ -57,7 +55,7 @@ class MoveBy2SubfolderType(WithExcelType):
         query = f"INSERT INTO {self.table_name()}({columns}) VALUES ({placeholders})"
 
         cursor.execute(query, data)
-            
+
     def _process_rows(self, ids, worker_id):
         print(f"[Worker {worker_id}] starting...")
         connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
@@ -78,23 +76,19 @@ class MoveBy2SubfolderType(WithExcelType):
         connection.close()
 
     def run(self, row):
-        def sanitize(name: str) -> str:
-            return re.sub(r'[<>:"/\\|?*]', '', name.strip())
+        file_name = self.cfg.get('moveonefile_file_name')
+        source_file = Path(file_name)
 
-        main = sanitize(self.cfg.get('moveby2subfolder_main_folder_name'))
-        sud = sanitize(row['sud_folder_name'])
-        client = sanitize(row['client_folder_name'])
+        if not source_file.exists():
+            raise FileNotFoundError(f"{file_name} does not exist in the current folder")
 
-        target_dir = Path(main) / sud / client
+        for path in Path(".").rglob("*.pdf"):
+            normalized_name = unicodedata.normalize("NFC", path.name)
+            if row['search_text'] in normalized_name:
+                target_dir = path.parent
+                target_file = target_dir / source_file.name
 
-        for pdf in Path(".").glob("*.pdf"):
-            try:
-                if row['search_text'] in pdf.name:
-                    target_file = target_dir / pdf.name
-                    if target_file.exists():
-                        pdf.unlink()
-                    else:
-                        target_dir.mkdir(parents=True, exist_ok=True)
-                        pdf.rename(target_file)
-            except Exception as e:
-                continue
+                if target_file.exists():
+                    continue
+
+                shutil.copy2(source_file, target_file)

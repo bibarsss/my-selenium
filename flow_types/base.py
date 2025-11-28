@@ -33,7 +33,3 @@ class Type(ABC):
     @abstractmethod
     def start(self):
         pass
-
-    # @abstractmethod
-    # def run(self, browser, connection, row, worker_id) -> None:
-    #     pass
