@@ -12,7 +12,7 @@ class Type(ABC):
         return self.__cfg
 
     def browser(self):
-        return Browser()
+        return Browser(bool(int(self.cfg.get('show_browser'))))
 
     @abstractmethod
     def label(self) -> str:

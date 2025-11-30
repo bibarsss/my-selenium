@@ -1,9 +1,6 @@
-    #     cc = 0
-    #         cc += 1
-    #         if cc == RETRY_COUNT:
-    #             raise Exception("Ошибка в step0")
+from common.podsudnost import getPodsudnostValue as g
 
-    # c = 0
-    #     c += 1
-    #     if c == RETRY_COUNT:
-    #         raise Exception("Ошибка в step0")
+a = 'Суд № 3 города Актобе Актюбинской области, район "Алматы"'
+a = '1'
+# a = '0'
+print(bool(int(a)))
