@@ -7,7 +7,7 @@ from browser.browser import Browser
 
 class DownloadIspListByTalonType(WithExcelType):
     def browser(self):
-        return Browser(with_gui=False)
+        return Browser()
 
     def label(self)->str:
         return 'Cкачиванием файлов с ск'
