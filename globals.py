@@ -1,3 +1,5 @@
+import json
+
 RETRY_COUNT = 6
 
 class Data:
@@ -23,4 +25,14 @@ class Config(Data):
                 if "=" in line:
                     key, value = line.split("=", 1)
                     self.data[key.strip()] = value.strip()
+        return self
+
+class Podsudnost(Data):
+    def __init__(self):
+        super().__init__()
+
+    def load_json(self):
+        with open("podsudnost.json", "r", encoding="utf-8") as f:
+            self.data = json.load(f)
+
         return self
