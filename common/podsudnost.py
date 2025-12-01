@@ -394,7 +394,7 @@ def getPodsudnostValue(podsudnost: str)->dict:
                 return {
                     "sudValue": oblastMap[oblast]['sudebnieOrgany'][sud],
                     "oblastValue": oblastMap[oblast]['value'],
-                    'sudName': podsudnost,
+                    'sudName': sud,
                 }
 
     return {
