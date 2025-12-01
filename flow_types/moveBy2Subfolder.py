@@ -8,7 +8,7 @@ class MoveBy2SubfolderType(WithExcelType):
         return 'Переместить папки через 2 подпапки'
 
     def table_name(self)->str:
-        return 'moveby2subfolder'
+        return 'move_by_2_subfolder'
 
     def excel_map(self):
         return {}

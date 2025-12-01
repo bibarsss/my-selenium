@@ -10,7 +10,7 @@ class MoveOneFileType(WithExcelType):
         return 'Перемещение определенного файла'
 
     def table_name(self)->str:
-        return 'polozhit_odin_file'
+        return 'move_one_file'
 
     def excel_map(self):
         return {}
