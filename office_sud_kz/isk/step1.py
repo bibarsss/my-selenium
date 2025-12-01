@@ -172,14 +172,12 @@ def run(browser: Browser, data)->bool:
         raise Exception('Подсудность в справочнике не найдены')
     
     c = 0
-    while not isSelectedByLabel(browser, "Область (столица, город республиканского значения)", oblastValue) or not isSelectedByLabel(browser, "Судебный орган", sudValue):
+    while not isSelectedByLabel(browser, "Область (столица, город республиканского значения)", oblastValue) \
+            or not isSelectedByLabel(browser, "Судебный орган", sudValue):
         selectByLabel(browser, "Область (столица, город республиканского значения)", oblastValue)
         c += 1
         if c == RETRY_COUNT:
             raise Exception("Ошибка в step1")
-        browser.wait_for_loader_done()
-        if not browser.htmlHasText(sudName):
-            continue
         browser.wait_for_loader_done()
 
         selectByLabel(browser, "Судебный орган", sudValue)

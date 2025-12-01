@@ -2,7 +2,6 @@ from pathlib import Path
 import shutil
 import sqlite3
 from flow_types.baseWithExcel import WithExcelType
-import re
 import unicodedata
 
 class MoveOneFileType(WithExcelType):
