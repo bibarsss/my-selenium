@@ -106,7 +106,6 @@ class DownloadIskListPismoType(WithoutExcelType):
 
     def _process_pages(self, worker_id, n_workers):
         from office_sud_kz.auth import auth
-
         print(f"[Worker {worker_id}] starting...")
         browser = self.browser()
 
