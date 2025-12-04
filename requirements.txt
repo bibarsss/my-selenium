@@ -3,3 +3,4 @@ openpyxl
 pypdf
 requests
 certifi
+urllib3
