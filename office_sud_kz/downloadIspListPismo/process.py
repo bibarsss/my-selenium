@@ -29,6 +29,7 @@ def run(browser: Browser, start: datetime, end: datetime, type: Type):
 
     count_items = len(items)
     for i in range(count_items):
+        go_to_page(browser)
         items = browser.driver.find_elements(By.CSS_SELECTOR, ".case-item-container")
         item = items[i]
 
@@ -42,7 +43,7 @@ def run(browser: Browser, start: datetime, end: datetime, type: Type):
         browser.wait_for_loader_done()
         while not browser.htmlHasText('Файлы'):
             browser.refresh()
-            go_back(browser)
+            go_to_page(browser)
 
             items = browser.driver.find_elements(By.CSS_SELECTOR, ".case-item-container")
             items[i].click()
@@ -50,27 +51,20 @@ def run(browser: Browser, start: datetime, end: datetime, type: Type):
 
         links = parse_links(browser, number)
         type.insert(links, connection)
-        go_back(browser)
+        go_to_page(browser)
         browser.wait_for_loader_done()
 
     connection.commit()
     connection.close()
     return False
 
-def go_back(browser: Browser):
-    c = 0
+def go_to_page(browser: Browser):
     clickByText(browser, "a", "Полученные письма")
     browser.wait_for_loader_done()
     while not browser.tagWithTextHasClass('a', 'Полученные письма', 'active'):
-        c += 1
-        if c > 4:
-            c = 0
-            browser.refresh()
-            browser.wait_for_loader_done()
-            continue
-
         clickByText(browser, "a", "Полученные письма")
         browser.wait_for_loader_done()
+        time.sleep(1)
 
 def get_first_last_date(items):
     if not items:

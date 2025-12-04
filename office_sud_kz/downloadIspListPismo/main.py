@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 from browser.browser import Browser
 from common.button import clickByText
 from globals import RETRY_COUNT
@@ -34,6 +35,7 @@ def run(browser: Browser, data: dict, type: Type):
     end = datetime.strptime(data['main_date_end'], "%d.%m.%Y")
 
     while True:
+        browser.refresh()
         if not ableToProcess(browser, data):
             if not nextPageButtonExists(browser):
                 break
@@ -52,6 +54,7 @@ def run(browser: Browser, data: dict, type: Type):
 
         if not nextPageButtonExists(browser):
             break
+
         clickByText(browser, "a", "►")
         browser.wait_for_loader_done()
 
@@ -71,7 +74,14 @@ def get_current_page(browser: Browser):
 
 def ableToProcess(browser: Browser, data: dict):
     current_page = get_current_page(browser)
+    c = 0
     while not current_page:
+        c += 1
+        if c == RETRY_COUNT:
+            c = 0
+            go_to_page(browser)
+            continue
+
         browser.refresh()
         current_page = get_current_page(browser)
 
@@ -81,3 +91,10 @@ def ableToProcess(browser: Browser, data: dict):
 
     return False
 
+def go_to_page(browser: Browser):
+    clickByText(browser, "a", "Полученные письма")
+    browser.wait_for_loader_done()
+    while not browser.tagWithTextHasClass('a', 'Полученные письма', 'active'):
+        clickByText(browser, "a", "Полученные письма")
+        browser.wait_for_loader_done()
+        time.sleep(1)

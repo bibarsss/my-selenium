@@ -2,6 +2,7 @@
 from multiprocessing import Process
 import os
 import sqlite3
+import time
 
 import requests
 import urllib3
@@ -52,7 +53,6 @@ class DownloadIskListPismoType(WithoutExcelType):
 
 
         n_workers = int(self.cfg.get("count_process") or 1)
-
         flows = {
             1: "Запуск парсера + скачивание файлов",
             2: "Запуск скачивание файлов"
@@ -87,6 +87,8 @@ class DownloadIskListPismoType(WithoutExcelType):
 
         ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()}")]
         connection.close()
+
+        print(f"Найдено {len(ids)} файлов")
 
         n_workers = int(self.cfg.get("count_process") or 1)
         chunks = chunk_list(ids, n_workers)
@@ -145,13 +147,19 @@ class DownloadIskListPismoType(WithoutExcelType):
         rows = connection.execute(f"SELECT * FROM {self.table_name()} WHERE id in ({placeholder})", ids).fetchall()
 
         for row in rows:
-            print(f"[Worker {worker_id}] downloading - ", row['file_name'])
+            # print(f"[Worker {worker_id}] downloading - {row['file_name']}")
+            c = 0
             while True:
+                c += 1
+                if c == RETRY_COUNT:
+                    print(f"[Worker {worker_id}] - Couldn't download a file - {row['file_name']}. Link - [{row['url']}]")
+                    break
+
                 try:
                     self.run(row)
                     break
                 except Exception as e:
-                    print(f"[Worker {worker_id}] Error downloading - {row['file_name']}. Retrying...")
+                    time.sleep(1)
 
         connection.commit()
         connection.close()
