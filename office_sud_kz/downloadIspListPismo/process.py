@@ -41,6 +41,7 @@ def run(browser: Browser, start: datetime, end: datetime, type: Type):
             browser.refresh()
             item.click()
             browser.wait_for_loader_done()
+            time.sleep(1)
 
         links = parse_links(browser, number)
         type.insert(links, connection)
@@ -58,6 +59,7 @@ def go_back(browser: Browser):
     while not browser.tagWithTextHasClass('a', 'Полученные письма', 'active')\
             and not current_page != get_current_page(browser):
         if c > 2:
+            c = 0
             print('refresh')
             browser.refresh()
         clickByText(browser, "a", "Полученные письма")

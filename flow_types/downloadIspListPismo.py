@@ -10,11 +10,11 @@ from flow_types.baseWithoutExcel import WithoutExcelType
 from globals import RETRY_COUNT
 from office_sud_kz.downloadIspListPismo.main import run as pismoRun
 
-
-    def label(self)->str:
+class DownloadIskListPismoType(WithoutExcelType):
+    def label(self):
         return 'Cкачиванием файлов с ск Письмо'
 
-    def table_name(self)->str:
+    def table_name(self):
         return 'download_isp_list_pismo'
 
     def migration(self):
