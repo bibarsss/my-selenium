@@ -10,7 +10,7 @@ from flow_types.baseWithoutExcel import WithoutExcelType
 from globals import RETRY_COUNT
 from office_sud_kz.downloadIspListPismo.main import run as pismoRun
 
-class DownloadIskListPismoType(WithoutExcelType):
+
     def label(self)->str:
         return 'Cкачиванием файлов с ск Письмо'
 
@@ -44,7 +44,6 @@ class DownloadIskListPismoType(WithoutExcelType):
             placeholders = ", ".join([":" + key for key in tmp.keys()])
 
             safe_execute(connection, f'''INSERT OR IGNORE INTO {self.table_name()}({columns}) VALUES ({placeholders})''', tmp)
-
 
     def start(self):
         def chunk_list(lst, n):
@@ -158,7 +157,6 @@ class DownloadIskListPismoType(WithoutExcelType):
         connection.close()
 
     def run(self, row):
-
         folder = "pismo_downloads"
         os.makedirs(folder, exist_ok=True)
 

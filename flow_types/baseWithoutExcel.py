@@ -1,4 +1,3 @@
-import sqlite3
 from flow_types.base import Type
 
 class WithoutExcelType(Type):
