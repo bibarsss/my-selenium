@@ -90,7 +90,7 @@ class DownloadIskListPismoType(WithoutExcelType):
 
         print(f"Найдено {len(ids)} файлов")
 
-        n_workers = int(self.cfg.get("count_process") or 1)
+        n_workers = 20
         chunks = chunk_list(ids, n_workers)
 
         processes2 = []
