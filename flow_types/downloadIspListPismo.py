@@ -1,118 +1,171 @@
-# # Заявление о вынесении судебного приказа 
-# from pathlib import Path
-# import unicodedata
-# import sqlite3
-# from office_sud_kz.application.main import run as applicationRun
-# from flow_types.base import Type
-# from common.sqlite import safe_execute
+# Cкачиванием файлов с ск Письмо
+from multiprocessing import Process
+import os
+import sqlite3
 
-# class SpType(Type):
-#     def label(self)->str:
-#         return 'Заявление о вынесении судебного приказа'
+import requests
+import urllib3
+from common.sqlite import safe_execute
+from flow_types.baseWithoutExcel import WithoutExcelType
+from globals import RETRY_COUNT
+from office_sud_kz.downloadIspListPismo.main import run as pismoRun
 
-#     def table_name(self)->str:
-#         return 'sp'
+class DownloadIskListPismoType(WithoutExcelType):
+    def label(self)->str:
+        return 'Cкачиванием файлов с ск Письмо'
 
-#     def excel_map(self):
-#         return {
-#             'status': 'excel_status',
-#             'status_text': 'excel_status_text',
-#         }
+    def table_name(self)->str:
+        return 'download_isp_list_pismo'
 
-#     def migration(self):
-#         connection = sqlite3.connect(self.cfg.get('db_name'))
-#         cursor = connection.cursor()
-#         cursor.execute(f'''
-#             DROP TABLE IF EXISTS {self.table_name()} 
-#             ''')
+    def migration(self):
+        connection = sqlite3.connect(self.cfg.get('db_name'))
 
-#         cursor.execute(f'''
-#             CREATE TABLE IF NOT EXISTS {self.table_name()}(
-#                         id INTEGER PRIMARY KEY,
-#                         excel_line_number INTEGER,
-#                         podsudnost TEXT, 
-#                         status TEXT,
-#                         status_text TEXT                            
-#                     )
-#                             ''')
-#         connection.commit()        
-#         connection.close()
+        cursor = connection.cursor()
+        cursor.execute(f'''
+            DROP TABLE IF EXISTS {self.table_name()}
+            ''')
+        cursor.execute(f'''
+            CREATE TABLE IF NOT EXISTS {self.table_name()}(
+                        id INTEGER PRIMARY KEY,
+                        file_name TEXT,
+                        url TEXT UNIQUE
+                    )
+                            ''')
+        connection.commit()
+        connection.close()
 
-#     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
-#         return
-#         # def safe_get(column_name: str) -> str:
-#         #     try:
-#         #         idx = self.cfg.index(column_name)
-#         #         return str(row[idx].value) if row[idx].value is not None else ""
-#         #     except (ValueError, IndexError):
-#         #         return ""
+    def insert(self, data, connection):
+        for i in data:
+            tmp = {
+                "file_name": i['file_name'],
+                "url": i['url']
+            }
+            columns = ", ".join(tmp.keys())
+            placeholders = ", ".join([":" + key for key in tmp.keys()])
 
-#         # data = {
-#         #     "excel_line_number": i,
-#         #     'iin': str(row[self.cfg.index('application_excel_iin')].value),
-#         #     'podsudnost': str(row[self.cfg.index('application_excel_podsudnost')].value),
-#         #     'nomer_dela': str(row[self.cfg.index('application_excel_nomer_dela')].value),
-#         #     'otvet4ik_po_delu': str(row[self.cfg.index('application_excel_otvet4ik_po_delu')].value),
-#         #     "status": safe_get('excel_status'),
-#         #     "status_text": safe_get('excel_status_text'),
-#         #     }
-        
-#         # columns = ", ".join(data.keys())
-#         # placeholders = ", ".join([":" + key for key in data.keys()])
-#         # query = f"INSERT INTO {self.table_name()}({columns}) VALUES ({placeholders})"
+            safe_execute(connection, f'''INSERT OR IGNORE INTO {self.table_name()}({columns}) VALUES ({placeholders})''', tmp)
 
-#         # cursor.execute(query, data)
 
-#     def _get_data(self, row) -> dict | str:
-#         return
-#         # iin = str(row['iin']).zfill(12)
+    def start(self):
+        def chunk_list(lst, n):
+            k, m = divmod(len(lst), n)
+            return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
 
-#         # dir = None
-#         # file_name = None
-#         # for path in Path(".").rglob("*.pdf"):
-#         #     if iin in unicodedata.normalize("NFC", path.name):
-#         #         dir = path.parent
-#         #         file_name = path.name
-#         #         break
 
-#         # if not dir or not file_name:
-#         #     return f'Папка или файл не найден!' 
+        n_workers = int(self.cfg.get("count_process") or 1)
 
-#         # data = {
-#         #     "iin": iin,
-#         #     "podsudnost": row['podsudnost'],
-#         #     "nomer_dela": row['nomer_dela'],
-#         #     "otvet4ik_po_delu": row['otvet4ik_po_delu'],
-#         #     "address": self.cfg.get('address'),
-#         #     'istcy_po_delu': self.cfg.get('application_istcy_po_delu'),
-#         #     'dir': dir,
-#         #     "file_path": str(dir / file_name),
-#         # }
+        flows = {
+            1: "Запуск парсера + скачивание файлов",
+            2: "Запуск скачивание файлов"
+        }
+        options = ",\n".join(f"{k} -> {v}" for k, v in flows.items())
+        print('==========================')
+        print(options)
+        print('==========================')
+        flow = int(input())
 
-#         # return data 
+        if flow not in flows:
+            print('Неправильный флоу')
+            return
 
-#     def run(self, browser, connection, row, worker_id):
-#         return
-#         # data = self._get_data(row) 
+        if flow == 1:
+            self.migration()
+            processes = []
+            for wid in range(n_workers):
+                p = Process(target=self._process_pages, args=(wid, n_workers,))
+                p.start()
+                processes.append(p)
 
-#         # if type(data) is str:
-#         #     safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
-#         #     print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
-#         #     return 
+            for p in processes:
+                p.join()
 
-#         # try:
-#         #     applicationRun(browser, data, worker_id)
-#         #     safe_execute(connection, f'''UPDATE {self.table_name()} 
-#         #                 SET status = ?, 
-#         #                 status_text = ? 
-#         #                 WHERE id = ?
-#         #                 ''', 
-#         #                 ('success', 
-#         #                 '', 
-#         #                 row['id']),)
-#         # except Exception as e:
-#         #     safe_execute(connection, f'''UPDATE {self.table_name()} 
-#         #                 SET status = ?, 
-#         #                 status_text = ? 
-#         #                 WHERE id = ?''', 
-#         #                 ('error', str(e), row['id']),)
+        print("Парсер: Получение ссылок для скачивание завершено!")
+        print("Начинается скачивание...")
+
+        connection = sqlite3.connect(self.cfg.get('db_name') )
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+
+        ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()}")]
+        connection.close()
+
+        n_workers = int(self.cfg.get("count_process") or 1)
+        chunks = chunk_list(ids, n_workers)
+
+        processes2 = []
+        for wid, chunk in enumerate(chunks):
+            p = Process(target=self._process_rows, args=(chunk, wid))
+            p.start()
+            processes2.append(p)
+
+        for p in processes2:
+            p.join()
+
+        print("Скачивание завершено!")
+
+    def _process_pages(self, worker_id, n_workers):
+        from office_sud_kz.auth import auth
+
+        print(f"[Worker {worker_id}] starting...")
+        browser = self.browser()
+
+        c = 0
+        while not browser.htmlHasText('Редактировать профиль'):
+            c += 1
+            if c == RETRY_COUNT:
+                raise Exception("Ошибка авторизации")
+            browser.main_office_sud_kz()
+            browser.wait_for_loader_done()
+            auth(browser, self.cfg)
+            browser.wait_for_loader_done()
+
+        data = {
+            "main_date_start":self.cfg.get('download_ispol_list_pismo_date_start'),
+            "main_date_end":self.cfg.get('download_ispol_list_pismo_date_end'),
+            "worker_id":worker_id,
+            "n_workers":n_workers
+        }
+
+        try:
+            pismoRun(browser, data, self)
+        except Exception as e:
+            print(e)
+            print(f"[Worker {worker_id}] stopped...")
+
+    def _process_rows(self, ids, worker_id):
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        print(f"[Worker {worker_id}] starting...")
+
+        connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
+        connection.execute("PRAGMA journal_mode=WAL;")
+        connection.execute("PRAGMA synchronous=NORMAL;")
+        connection.execute("PRAGMA busy_timeout = 5000;")
+        connection.row_factory = sqlite3.Row
+
+        placeholder = ','.join('?' * len(ids))
+        rows = connection.execute(f"SELECT * FROM {self.table_name()} WHERE id in ({placeholder})", ids).fetchall()
+
+        for row in rows:
+            print(f"[Worker {worker_id}] downloading - ", row['file_name'])
+            while True:
+                try:
+                    self.run(row)
+                    break
+                except Exception as e:
+                    print(f"[Worker {worker_id}] Error downloading - {row['file_name']}. Retrying...")
+
+        connection.commit()
+        connection.close()
+
+    def run(self, row):
+
+        folder = "pismo_downloads"
+        os.makedirs(folder, exist_ok=True)
+
+        output_file = os.path.join(folder, row['file_name'])
+
+        response = requests.get(row['url'], verify=False)
+        response.raise_for_status()
+
+        with open(output_file, "wb") as f:
+            f.write(response.content)

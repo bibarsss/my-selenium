@@ -12,7 +12,7 @@ class Browser:
     def __init__(self, with_gui = False):
         self.download_dir = os.path.join(os.getcwd(), "downloads")
         os.makedirs(self.download_dir, exist_ok=True)
-        
+
         options = Options()
         options.page_load_strategy = "normal"
 
@@ -41,9 +41,8 @@ class Browser:
         self.wait = WebDriverWait(self.driver, 60)
 
     def main_office_sud_kz(self):
-        # self.safe_get("https://93.185.73.249/")
         self.safe_get("https://office.sud.kz/")
-# https://93.185.73.249/
+
     def safe_get(self, url, timeout=5, retries=1):
         for attempt in range(retries + 1):
             self.driver.get(url)
@@ -51,13 +50,13 @@ class Browser:
                 WebDriverWait(self.driver, timeout).until(
                     EC.presence_of_element_located((By.TAG_NAME, "body"))
                 )
-                return True 
+                return True
             except TimeoutException:
                 if attempt < retries:
                     self.driver.refresh()
                 else:
                     return False
-                
+
     def refresh(self):
         self.driver.refresh()
 
@@ -75,4 +74,13 @@ class Browser:
             )
             return True
         except Exception:
+            return False
+
+    def tagWithTextHasClass(self, tag: str, text: str, className: str):
+        xpath = f'//{tag}[normalize-space()="{text}"]'
+        try:
+            el = self.driver.find_element(By.XPATH, xpath)
+            classes = el.get_attribute("class") or ""
+            return className in classes.split()
+        except:
             return False

@@ -19,17 +19,5 @@ class Type(ABC):
         pass
 
     @abstractmethod
-    def table_name(self) -> str:
-        pass
-
-    @abstractmethod
-    def migration(self, db: str) -> None:
-        pass
-
-    @abstractmethod
-    def insert(self, row: tuple, cursor: sqlite3.Cursor, i: int) -> None:
-        pass
-    
-    @abstractmethod
     def start(self):
         pass

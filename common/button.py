@@ -5,7 +5,12 @@ from selenium.webdriver.common.by import By
 from browser.browser import Browser
 
 def clickByText(browser: Browser, tag: str, text: str):
-    xpath = f'//{tag}[contains(text(), "{text}")]'
+    # xpath = f'//{tag}[contains(text(), "{text}")]'
+    xpath = f'//a[normalize-space()="{text}"]'
+    _clickByXpath(browser, xpath)
+
+def clickLinkByHref(browser: Browser, href: str):
+    xpath = f'//a[@href="{href}"]'
     _clickByXpath(browser, xpath)
 
 def clickByValue(browser: Browser, value):
@@ -30,7 +35,8 @@ def clickByIndex(browser: Browser, selector: str, index: int):
     try:
         el.click()
     except Exception:
-        browser.driver.execute_script("arguments[0].click();", el)
+        pass
+        # browser.driver.execute_script("arguments[0].click();", el)
 
 
 def clickButtonByRow(browser: Browser, div_id: str, row_index: int):
@@ -52,10 +58,20 @@ def clickFooterButtonByValue(browser: Browser, div_id: str, value: str):
     except Exception as e:
         browser.driver.execute_script("arguments[0].click();", el)
 
+# def _clickByXpath(browser: Browser, xpath: str):
+#     browser.wait.until(_clickIsReady(browser, xpath))
+#     el = browser.driver.find_element(By.XPATH, xpath)
+#     el.click()
+
 def _clickByXpath(browser: Browser, xpath: str):
-    browser.wait.until(_clickIsReady(browser, xpath))
+    browser.wait.until(lambda d: d.find_element(By.XPATH, xpath).is_displayed())
     el = browser.driver.find_element(By.XPATH, xpath)
-    el.click()
+
+    try:
+        el.click()
+    except:
+        browser.driver.execute_script("arguments[0].click();", el)
+
 
 def _clickIsReady(browser: Browser, xpath: str):
     def _predicate(_):

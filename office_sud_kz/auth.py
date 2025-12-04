@@ -9,12 +9,14 @@ import globals
 import time
 
 def auth(browser: Browser, cfg: globals.Config):
-    while not is_rus_selected(browser):
+    while not browser.htmlHasText("Судебный кабинет"):
         clickByIndex(browser, "div.lang a", 1)
         browser.wait_for_loader_done()
+        browser.refresh()
         time.sleep(1)
 
-    while not textIsSetByPlaceholder(browser, "ИИН/БИН", cfg.get('iin')) and not textByPlaceholder(browser, "Пароль", cfg.get('password')):
+    while not textIsSetByPlaceholder(browser, "ИИН/БИН", cfg.get('iin')) \
+            or not textIsSetByPlaceholder(browser, "Пароль", cfg.get('password')):
         textByPlaceholder(browser, "ИИН/БИН", cfg.get('iin'))
         textByPlaceholder(browser, "Пароль", cfg.get('password'))
         browser.wait_for_loader_done()

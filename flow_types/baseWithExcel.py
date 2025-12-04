@@ -11,18 +11,21 @@ class WithExcelType(Type):
     def excel_map(self) -> dict:
         pass
 
-    def label(self) -> str:
-        pass
-
+    @abstractmethod
     def table_name(self) -> str:
         pass
 
+    @abstractmethod
     def migration(self, db: str) -> None:
         pass
 
+    @abstractmethod
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i: int) -> None:
         pass
-    
+
+    def label(self) -> str:
+        pass
+
     def run(self, browser, connection, row, worker_id) -> None:
         pass
 
@@ -43,7 +46,7 @@ class WithExcelType(Type):
         for i, row in rows:
             self.insert(row, cursor, i)
 
-        connection.commit()        
+        connection.commit()
 
         ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()} WHERE status != ?", ('success',))]
         connection.close()
@@ -61,7 +64,7 @@ class WithExcelType(Type):
             p.join()
 
         self.save_to_excel()
-    
+
     def _process_rows(self, ids, worker_id):
         from office_sud_kz.auth import auth
 
@@ -91,7 +94,7 @@ class WithExcelType(Type):
 
             excel_line_number = row['excel_line_number']
             print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
-            self.run(browser, connection, row, worker_id)        
+            self.run(browser, connection, row, worker_id)
 
         connection.commit()
         connection.close()
@@ -102,7 +105,7 @@ class WithExcelType(Type):
 
         base, ext = os.path.splitext(self.cfg.get('file'))
         dst_file = f"{base}_biba{ext}"
-        shutil.copy(self.cfg.get('file'), dst_file)   
+        shutil.copy(self.cfg.get('file'), dst_file)
 
         connection = sqlite3.connect(self.cfg.get('db_name'))
         connection.row_factory = sqlite3.Row

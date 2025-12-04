@@ -1,14 +1,11 @@
 # Cкачиванием файлов с ск
 import sqlite3
-from office_sud_kz.downloadIspListByTalon.main import run as runMain 
+from office_sud_kz.downloadIspListByTalon.main import run as runMain
 from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
 from browser.browser import Browser
 
 class DownloadIspListByTalonType(WithExcelType):
-    def browser(self):
-        return Browser()
-
     def label(self)->str:
         return 'Cкачиванием файлов с ск'
 
@@ -25,19 +22,19 @@ class DownloadIspListByTalonType(WithExcelType):
         connection = sqlite3.connect(self.cfg.get('db_name'))
         cursor = connection.cursor()
         cursor.execute(f'''
-            DROP TABLE IF EXISTS {self.table_name()} 
+            DROP TABLE IF EXISTS {self.table_name()}
             ''')
 
         cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
                         excel_line_number INTEGER,
-                        talon TEXT, 
+                        talon TEXT,
                         status TEXT,
-                        status_text TEXT                            
+                        status_text TEXT
                     )
                             ''')
-        connection.commit()        
+        connection.commit()
         connection.close()
 
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
@@ -54,8 +51,8 @@ class DownloadIspListByTalonType(WithExcelType):
             "status": safe_get('excel_status'),
             "status_text": safe_get('excel_status_text'),
             }
-        
-        talon = str(data.get('talon', '')).strip()  
+
+        talon = str(data.get('talon', '')).strip()
 
         if not talon.isdigit():
             return
@@ -71,24 +68,24 @@ class DownloadIspListByTalonType(WithExcelType):
             "talon": row['talon'],
         }
 
-        return data 
+        return data
 
     def run(self, browser, connection, row, worker_id):
-        data = self._get_data(row) 
+        data = self._get_data(row)
 
         try:
             runMain(browser, data, worker_id)
-            safe_execute(connection, f'''UPDATE {self.table_name()} 
-                        SET status = ?, 
-                        status_text = ? 
+            safe_execute(connection, f'''UPDATE {self.table_name()}
+                        SET status = ?,
+                        status_text = ?
                         WHERE id = ?
-                        ''', 
-                        ('success', 
-                        '', 
+                        ''',
+                        ('success',
+                        '',
                         row['id']),)
         except Exception as e:
-            safe_execute(connection, f'''UPDATE {self.table_name()} 
-                        SET status = ?, 
-                        status_text = ? 
-                        WHERE id = ?''', 
+            safe_execute(connection, f'''UPDATE {self.table_name()}
+                        SET status = ?,
+                        status_text = ?
+                        WHERE id = ?''',
                         ('error', str(e), row['id']),)

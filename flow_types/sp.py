@@ -1,7 +1,7 @@
-# Заявление о вынесении судебного приказа 
+# Заявление о вынесении судебного приказа
 from pathlib import Path
 import sqlite3
-from office_sud_kz.sp.main import run as spRun 
+from office_sud_kz.sp.main import run as spRun
 from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
 from browser.browser import Browser
@@ -9,7 +9,7 @@ import unicodedata
 
 class SpType(WithExcelType):
     def browser(self):
-        return Browser()
+        return Browser(True)
 
     def label(self)->str:
         return 'Заявление о вынесении судебного приказа'
@@ -27,24 +27,24 @@ class SpType(WithExcelType):
         connection = sqlite3.connect(self.cfg.get('db_name'))
         cursor = connection.cursor()
         cursor.execute(f'''
-            DROP TABLE IF EXISTS {self.table_name()} 
+            DROP TABLE IF EXISTS {self.table_name()}
             ''')
 
         cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
                         excel_line_number INTEGER,
-                        number TEXT NOT NULL, 
-                        podsudnost TEXT, 
-                        iin_dolzhnik TEXT NOT NULL, 
-                        summaIska TEXT NOT NULL, 
-                        powlina TEXT NOT NULL, 
+                        number TEXT NOT NULL,
+                        podsudnost TEXT,
+                        iin_dolzhnik TEXT NOT NULL,
+                        summaIska TEXT NOT NULL,
+                        powlina TEXT NOT NULL,
                         sp_file_realname TEXT NOT NULL,
                         status TEXT,
-                        status_text TEXT                            
+                        status_text TEXT
                     )
                             ''')
-        connection.commit()        
+        connection.commit()
         connection.close()
 
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
@@ -66,7 +66,7 @@ class SpType(WithExcelType):
             "status": safe_get('excel_status'),
             "status_text": safe_get('excel_status_text'),
             }
-        
+
         columns = ", ".join(data.keys())
         placeholders = ", ".join([":" + key for key in data.keys()])
         query = f"INSERT INTO {self.table_name()}({columns}) VALUES ({placeholders})"
@@ -83,7 +83,7 @@ class SpType(WithExcelType):
                 break
 
         if not dir:
-            return 'Папка не найдена!' 
+            return 'Папка не найдена!'
 
         data = {
             "iin": str(self.cfg.get('iin')).zfill(12),
@@ -102,32 +102,32 @@ class SpType(WithExcelType):
             "sp_file_realpath": str(dir / row['sp_file_realname']),
         }
 
-        return data 
+        return data
 
     def run(self, browser, connection, row, worker_id):
-        data = self._get_data(row) 
+        data = self._get_data(row)
 
         if type(data) is str:
-            safe_execute(connection, f'''UPDATE {self.table_name()} SET 
-                            status = ?, 
-                            status_text = ? 
-                            WHERE id = ?''', 
+            safe_execute(connection, f'''UPDATE {self.table_name()} SET
+                            status = ?,
+                            status_text = ?
+                            WHERE id = ?''',
                             ('skipped', data, row['id']))
-                
+
             print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
-            return 
+            return
 
         try:
             spRun(browser, data, worker_id)
-            safe_execute(connection, f'''UPDATE {self.table_name()} 
-                        SET status = ?, 
-                        status_text = ? 
+            safe_execute(connection, f'''UPDATE {self.table_name()}
+                        SET status = ?,
+                        status_text = ?
                         WHERE id = ?
-                        ''', 
+                        ''',
                         ('success', '', row['id']))
         except Exception as e:
-            safe_execute(connection, f'''UPDATE {self.table_name()} 
-                        SET status = ?, 
-                        status_text = ? 
-                        WHERE id = ?''', 
+            safe_execute(connection, f'''UPDATE {self.table_name()}
+                        SET status = ?,
+                        status_text = ?
+                        WHERE id = ?''',
                         ('error', str(e), row['id']))
