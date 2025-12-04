@@ -31,7 +31,8 @@ jobs:
       # 4️⃣ Build EXE with auto-generated spec
       - name: Build EXE
         run: |
-          pyinstaller --onefile main.py
+          rm -rf build/ dist/
+          pyinstaller --clean --onefile main.py
           dir dist
 
       # 5️⃣ Upload built EXE
