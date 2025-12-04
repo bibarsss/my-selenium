@@ -8,6 +8,7 @@ from .parse_link import run as parse_links
 from flow_types.base import Type
 
 def run(browser: Browser, start: datetime, end: datetime, type: Type):
+    print('run')
     items = browser.driver.find_elements(By.CSS_SELECTOR, ".case-item-container")
 
     first, last = get_first_last_date(items)
@@ -33,19 +34,20 @@ def run(browser: Browser, start: datetime, end: datetime, type: Type):
         item_date = datetime.strptime(item_date, "%d.%m.%Y %H:%M")
         if item_date < start or item_date > end:
             continue
+        print('here')
 
         number = extract_number(item)
         item.click()
         browser.wait_for_loader_done()
+        print("ФАЙЛЫ ЕСТЬ ------------ ", browser.htmlHasText('Файлы'))
         while not browser.htmlHasText('Файлы'):
             browser.refresh()
             item.click()
             browser.wait_for_loader_done()
-            time.sleep(1)
 
         links = parse_links(browser, number)
+        print(links)
         type.insert(links, connection)
-
         go_back(browser)
         browser.wait_for_loader_done()
 
@@ -54,19 +56,18 @@ def run(browser: Browser, start: datetime, end: datetime, type: Type):
     return False
 
 def go_back(browser: Browser):
+    print('go_back')
     c = 0
-    current_page = get_current_page(browser)
-    while not browser.tagWithTextHasClass('a', 'Полученные письма', 'active')\
-            and not current_page != get_current_page(browser):
+    while not browser.tagWithTextHasClass('a', 'Полученные письма', 'active'):
         if c > 2:
             c = 0
-            print('refresh')
             browser.refresh()
         clickByText(browser, "a", "Полученные письма")
         browser.wait_for_loader_done()
         c += 1
 
 def get_first_last_date(items):
+    print('get_first_last_date')
     if not items:
         first_date = None
         last_date = None
@@ -77,6 +78,7 @@ def get_first_last_date(items):
     return (first_date, last_date)
 
 def extract_date(item):
+    print('extract_date')
     rows = item.find_elements(By.CSS_SELECTOR, ".row")
     for row in rows:
         desc = row.find_element(By.CSS_SELECTOR, ".desc").text.strip()
@@ -85,9 +87,11 @@ def extract_date(item):
     return None
 
 def extract_number(item):
+    print('extract_number')
     return item.find_element(By.TAG_NAME, "h3").text.strip()
 
 def get_current_page(browser):
+    print('get_current_page')
     try:
         el = browser.driver.find_element(By.CSS_SELECTOR, ".list-pages span.current")
         return int(el.text.strip())
