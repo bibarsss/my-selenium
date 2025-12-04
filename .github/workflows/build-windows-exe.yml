@@ -31,7 +31,7 @@ jobs:
       # 4️⃣ Build EXE with auto-generated spec
       - name: Build EXE
         run: |
-          pyinstaller --clean --onefile main.py --paths=. --add-data "office_sud_kz;office_sud_kz"
+          pyinstaller main.spec
           dir dist
 
       # 5️⃣ Upload built EXE
