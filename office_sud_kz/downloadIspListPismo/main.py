@@ -76,7 +76,7 @@ def ableToProcess(browser: Browser, data: dict):
         current_page = get_current_page(browser)
 
     if current_page%data['n_workers'] == data['worker_id']:
-        print('[Worker ' + str(data['worker_id']) + '] - ', current_page, 'страница')
+        print(f'[Worker {data['worker_id']}] - {current_page} страница')
         return True
 
     return False
