@@ -6,6 +6,7 @@ from flow_types.downloadIspListPismo import DownloadIskListPismoType
 from flow_types.sp import SpType
 from flow_types.moveBy2Subfolder import MoveBy2SubfolderType
 from flow_types.moveOneFile import MoveOneFileType
+# from flow_types.generateFilesByTemplate import GenerateFilesByTemplateType
 
 types = {
     1: IskType,
@@ -15,7 +16,8 @@ types = {
     5: DownloadIspListByTalonType,
     6: DownloadIskListPismoType,
     7: MoveBy2SubfolderType,
-    8: MoveOneFileType
+    8: MoveOneFileType,
+    # 9: GenerateFilesByTemplateType
 }
 
 excelTypes = {

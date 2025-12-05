@@ -2,6 +2,7 @@ __pycache__
 .venv
 /flow_isk
 *.pdf
+*.docx
 .vscode
 auth.txt
 .DS_Store

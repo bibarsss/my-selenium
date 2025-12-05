@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_windows:
-    runs-on: windows-latest  # GitHub’s Windows runner
+    runs-on: windows-latest # GitHub’s Windows runner
 
     steps:
       # 1️⃣ Checkout repository
@@ -31,7 +31,8 @@ jobs:
       # 4️⃣ Build EXE using spec (generated on Windows)
       - name: Build EXE
         run: |
-          pyinstaller --clean main.spec
+          pyinstaller --clean -y --onefile main.py
+          pyinstaller --clean -y main.spec
 
       # 5️⃣ Upload built EXE as artifact
       - name: Upload EXE
