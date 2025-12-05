@@ -13,20 +13,20 @@ def run(browser: Browser, data):
         or data['talon'] == 'None'
         or not str(data['talon']).isdigit()
     ):
-        raise Exception(f"Номер талона в неправильном формате -> {data['talon']}")   
+        raise Exception(f"Номер талона в неправильном формате -> {data['talon']}")
 
-    textByLabel(browser, 'Номер', data['talon']) 
+    textByLabel(browser, 'Номер', data['talon'])
     browser.wait_for_loader_done()
 
     for i in range(5):
         clickByValue(browser, 'Найти')
         browser.wait_for_loader_done()
-        time.sleep(1)
+        time.sleep(2)
         if has_result(browser):
             break
 
     if not has_result(browser):
-        raise Exception("По талону запись не найдена!")        
+        raise Exception("По талону запись не найдена!")
 
     clickByIndex(browser, "div.case-item-container", 0)
     while not browser.htmlHasText('Динамика хода рассмотрения дела') and not browser.htmlHasText('Статусы'):

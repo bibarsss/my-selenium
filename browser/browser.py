@@ -9,8 +9,8 @@ import os
 import platform
 
 class Browser:
-    def __init__(self, with_gui = False):
-        self.download_dir = os.path.join(os.getcwd(), "downloads")
+    def __init__(self, with_gui = False, download_dir = "downloads"):
+        self.download_dir = os.path.join(os.getcwd(), download_dir)
         os.makedirs(self.download_dir, exist_ok=True)
 
         options = Options()

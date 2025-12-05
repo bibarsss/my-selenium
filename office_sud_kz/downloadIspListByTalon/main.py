@@ -1,4 +1,6 @@
+import os
 from browser.browser import Browser
+from selenium.webdriver.common.by import By
 from . import parse_links, search, download
 
 import time
@@ -15,7 +17,11 @@ def run(browser: Browser, data, worker_id):
     search.run(browser, data)
 
     print(f'[Worker {worker_id}] parsing...')
-    links = parse_links.run(browser, data)
+    file_links = parse_links.run(browser, data)
 
     print(f'[Worker {worker_id}] downloading...')
-    download.run(browser, data, links)
+    download.run(browser, data, file_links)
+
+
+
+

@@ -9,6 +9,12 @@ class DownloadIspListByTalonType(WithExcelType):
     def label(self)->str:
         return 'Cкачиванием файлов с ск'
 
+    def browser(self):
+        return Browser(bool(int(self.cfg.get('show_browser'))), self.download_dir())
+
+    def download_dir(self):
+        return 'downloads_sk_talon'
+
     def table_name(self)->str:
         return 'download_isp_list_by_talon'
 

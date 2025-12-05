@@ -164,7 +164,7 @@ class DownloadIskListPismoType(WithoutExcelType):
         connection.close()
 
     def run(self, row):
-        folder = "pismo_downloads"
+        folder = "downloads_pismo"
         os.makedirs(folder, exist_ok=True)
 
         output_file = os.path.join(folder, row['file_name'])
