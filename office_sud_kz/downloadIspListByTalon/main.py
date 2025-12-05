@@ -13,6 +13,8 @@ def run(browser: Browser, data, worker_id):
         browser.wait_for_loader_done()
         time.sleep(2)
 
+    data['worker_id'] = worker_id
+
     print(f'[Worker {worker_id}] searching...')
     search.run(browser, data)
 

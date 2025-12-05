@@ -13,8 +13,7 @@ def run(browser: Browser, data):
         if "/attachDownload" in link.get_attribute("href")
     ]
 
-    print(f"Found {len(file_links)} files to download.")
-
+    print(f"[Worker {data['worker_id']}] Found {len(file_links)} files to download.")
     return file_links
 
     # sections = browser.driver.find_elements(
