@@ -33,10 +33,17 @@ def run(browser: Browser, data: dict, type: Type):
 
     start = datetime.strptime(data['main_date_start'], "%d.%m.%Y")
     end = datetime.strptime(data['main_date_end'], "%d.%m.%Y")
+    previous_page = 0
 
     while True:
         browser.refresh()
-        if not ableToProcess(browser, data):
+        browser.wait_for_loader_done()
+
+        current_page = get_current_page_smart(browser)
+        previous_page_temp = previous_page
+        previous_page = current_page
+
+        if not ableToProcess(previous_page_temp, current_page, data):
             if not nextPageButtonExists(browser):
                 break
             clickByText(browser, "a", "►")
@@ -45,6 +52,7 @@ def run(browser: Browser, data: dict, type: Type):
 
         # obrabotka
         try:
+            print(f'[Worker {data['worker_id']}] - {current_page} страница')
             shouldStop = process.run(browser, start, end, type)
         except Exception:
             continue
@@ -72,7 +80,7 @@ def get_current_page(browser: Browser):
     except Exception:
         return None
 
-def ableToProcess(browser: Browser, data: dict):
+def get_current_page_smart(browser: Browser):
     current_page = get_current_page(browser)
     c = 0
     while not current_page:
@@ -85,11 +93,16 @@ def ableToProcess(browser: Browser, data: dict):
         browser.refresh()
         current_page = get_current_page(browser)
 
-    if current_page%data['n_workers'] == data['worker_id']:
-        print(f'[Worker {data['worker_id']}] - {current_page} страница')
-        return True
+    return current_page
 
-    return False
+def ableToProcess(previous_page, current_page, data: dict):
+    if previous_page >= current_page:
+        return False
+
+    if current_page%data['n_workers'] != data['worker_id']:
+        return False
+
+    return True
 
 def go_to_page(browser: Browser):
     clickByText(browser, "a", "Полученные письма")
