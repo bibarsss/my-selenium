@@ -7,8 +7,8 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: windows-latest
+  build_windows:
+    runs-on: windows-latest  # GitHub’s Windows runner
 
     steps:
       # 1️⃣ Checkout repository
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11.9"
+          python-version: "3.11"
 
       # 3️⃣ Install dependencies
       - name: Install dependencies
@@ -28,12 +28,12 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      # 4️⃣ Build EXE with auto-generated spec
+      # 4️⃣ Build EXE using spec (generated on Windows)
       - name: Build EXE
         run: |
           pyinstaller --clean main.spec
 
-      # 5️⃣ Upload built EXE
+      # 5️⃣ Upload built EXE as artifact
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
