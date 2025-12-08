@@ -14,6 +14,10 @@ class Type(ABC):
     def browser(self):
         return Browser(bool(int(self.cfg.get('show_browser'))))
 
+    def chunk_list(self, lst, n):
+        k, m = divmod(len(lst), n)
+        return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
+
     @abstractmethod
     def label(self) -> str:
         pass

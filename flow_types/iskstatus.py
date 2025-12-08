@@ -15,10 +15,11 @@ class IskstatusType(WithExcelType):
         return {
             'status': 'excel_status',
             'status_text': 'excel_status_text',
-            'result': 'iskstatus_excel_result', 
-            'result_date': 'iskstatus_excel_result_date', 
-            'result_sud_name': 'iskstatus_excel_result_sud_name', 
-            'result_number': 'iskstatus_excel_result_number', 
+            'result': 'iskstatus_excel_result',
+            'result_date': 'iskstatus_excel_result_date',
+            'result_sud_name': 'iskstatus_excel_result_sud_name',
+            'result_number': 'iskstatus_excel_result_number',
+            'result_text': 'iskstatus_excel_result_text',
         }
 
     def migration(self):
@@ -26,24 +27,24 @@ class IskstatusType(WithExcelType):
 
         cursor = connection.cursor()
         cursor.execute(f'''
-            DROP TABLE IF EXISTS {self.table_name()} 
+            DROP TABLE IF EXISTS {self.table_name()}
             ''')
         cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
                         excel_line_number INTEGER,
-                        talon TEXT NOT NULL, 
-                        result TEXT, 
+                        talon TEXT NOT NULL,
+                        result TEXT,
                         result_date TEXT,
-                        result_sud_name TEXT, 
+                        result_sud_name TEXT,
                         result_number TEXT,
+                        result_text TEXT,
                         status TEXT,
-                        status_text TEXT                            
+                        status_text TEXT
                     )
                             ''')
-        connection.commit()        
+        connection.commit()
         connection.close()
-
 
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
         def safe_get(column_name: str) -> str:
@@ -59,8 +60,8 @@ class IskstatusType(WithExcelType):
             "status": safe_get('excel_status'),
             "status_text": safe_get('excel_status_text'),
             }
-        
-        talon = str(data.get('talon', '')).strip()  
+
+        talon = str(data.get('talon', '')).strip()
 
         if not talon.isdigit():
             return
@@ -76,27 +77,29 @@ class IskstatusType(WithExcelType):
             "talon": row['talon'],
         }
 
-        return data 
+        return data
 
     def run(self, browser, connection, row, worker_id):
         data = self._get_data(row)
         try:
             parsed_data = iskstatusRun(browser, data, worker_id)
-            safe_execute(connection, f'''UPDATE {self.table_name()} 
-                        SET status = ?, 
-                        status_text = ?, 
+            safe_execute(connection, f'''UPDATE {self.table_name()}
+                        SET status = ?,
+                        status_text = ?,
                         result = ?,
                         result_date = ?,
                         result_sud_name = ?,
-                        result_number = ?
+                        result_number = ?,
+                        result_text = ?
                         WHERE id = ?
-                        ''', 
-                        ('success', 
-                        '', 
+                        ''',
+                        ('success',
+                        '',
                         parsed_data['result'],
                         parsed_data['result_date'],
                         parsed_data['result_sud_name'],
                         parsed_data['result_number'],
+                        parsed_data['result_text'],
                         row['id']),)
         except Exception as e:
             safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))

@@ -7,15 +7,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from browser.browser import Browser
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
+from globals import RETRY_COUNT
+
 def run(browser: Browser, data):
     if (
         data['talon'] is None
         or data['talon'] == 'None'
         or not str(data['talon']).isdigit()
     ):
-        raise Exception(f"Номер талона в неправильном формате -> {data['talon']}")   
+        raise Exception(f"Номер талона в неправильном формате -> {data['talon']}")
 
-    textByLabel(browser, 'Номер', data['talon']) 
+    textByLabel(browser, 'Номер', data['talon'])
     browser.wait_for_loader_done()
 
     for i in range(5):
@@ -26,10 +28,16 @@ def run(browser: Browser, data):
             break
 
     if not has_result(browser):
-        raise Exception("По талону запись не найдена!")        
+        raise Exception("По талону запись не найдена!")
 
-    clickByIndex(browser, "div.case-item-container", 0)
+    c = 0
     while not browser.htmlHasText('Динамика хода рассмотрения дела'):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("По талону не смог открыть запись!")
+
+        clickByIndex(browser, "div.case-item-container", 0)
+        browser.wait_for_loader_done()
         time.sleep(1)
 
 def has_result(browser) -> bool:

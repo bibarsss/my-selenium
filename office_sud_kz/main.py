@@ -10,8 +10,8 @@ def run():
         print("Файл config.txt не найден!")
         return
 
-    options = ",\n".join(f"{k} -> {v().label()}" for k, v in types.items())
-    full_options = options + ",\n111 -> Перезапуск если не получил файл"
+    options = ".\n".join(f"{k} -> {v().label()}" for k, v in types.items())
+    full_options = options + ".\n111 -> Перезапуск если не получил файл."
     try:
         print('==========================')
         print(full_options)
@@ -39,5 +39,7 @@ def run():
         print("Неправильный тип флоу!")
         return
 
+    # type = 2
+    # type = 9
     type = types[type](cfg)
     type.start()

@@ -47,11 +47,6 @@ class DownloadIskListPismoType(WithoutExcelType):
             safe_execute(connection, f'''INSERT OR IGNORE INTO {self.table_name()}({columns}) VALUES ({placeholders})''', tmp)
 
     def start(self):
-        def chunk_list(lst, n):
-            k, m = divmod(len(lst), n)
-            return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
-
-
         n_workers = int(self.cfg.get("count_process") or 1)
         flows = {
             1: "Запуск парсера + скачивание файлов",
@@ -91,7 +86,7 @@ class DownloadIskListPismoType(WithoutExcelType):
         print(f"Найдено {len(ids)} файлов")
 
         n_workers = 20
-        chunks = chunk_list(ids, n_workers)
+        chunks = self.chunk_list(ids, n_workers)
 
         processes2 = []
         for wid, chunk in enumerate(chunks):

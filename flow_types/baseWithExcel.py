@@ -16,7 +16,7 @@ class WithExcelType(Type):
         pass
 
     @abstractmethod
-    def migration(self, db: str) -> None:
+    def migration(self) -> None:
         pass
 
     @abstractmethod
@@ -30,10 +30,6 @@ class WithExcelType(Type):
         pass
 
     def start(self):
-        def chunk_list(lst, n):
-            k, m = divmod(len(lst), n)
-            return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
-
         self.migration()
 
         wb = load_workbook(self.cfg.get('file'))
@@ -52,7 +48,7 @@ class WithExcelType(Type):
         connection.close()
 
         n_workers = int(self.cfg.get("count_process") or 1)
-        chunks = chunk_list(ids, n_workers)
+        chunks = self.chunk_list(ids, n_workers)
 
         processes = []
         for wid, chunk in enumerate(chunks):

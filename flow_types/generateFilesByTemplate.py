@@ -16,25 +16,25 @@ class GenerateFilesByTemplateType(WithExcelType):
         return {}
 
     def migration(self):
-        return
-        # connection = sqlite3.connect(self.cfg.get('db_name'))
+        print('migration')
+        connection = sqlite3.connect(self.cfg.get('db_name'))
 
-        # cursor = connection.cursor()
+        cursor = connection.cursor()
 
-        # cursor.execute(f'''
-        #     DROP TABLE IF EXISTS {self.table_name()}
-        #     ''')
+        cursor.execute(f'''
+            DROP TABLE IF EXISTS {self.table_name()}
+            ''')
 
-        # cursor.execute(f'''
-        #     CREATE TABLE IF NOT EXISTS {self.table_name()}(
-        #                 id INTEGER PRIMARY KEY,
-        #                 excel_line_number INTEGER,
-        #                 status TEXT,
-        #                 status_text TEXT
-        #             )
-        #                     ''')
-        # connection.commit()
-        # connection.close()
+        cursor.execute(f'''
+            CREATE TABLE IF NOT EXISTS {self.table_name()}(
+                        id INTEGER PRIMARY KEY,
+                        excel_line_number INTEGER,
+                        status TEXT,
+                        status_text TEXT
+                    )
+                            ''')
+        connection.commit()
+        connection.close()
 
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
         return
@@ -114,3 +114,35 @@ class GenerateFilesByTemplateType(WithExcelType):
             except Exception as e:
                 safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
             break
+
+    def start(self):
+        self.migration()
+
+        wb = load_workbook(self.cfg.get('file'))
+        sheet = wb.active
+        rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
+
+        connection = sqlite3.connect(self.cfg.get('db_name') )
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        for i, row in rows:
+            self.insert(row, cursor, i)
+
+        connection.commit()
+
+        ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()} WHERE status != ?", ('success',))]
+        connection.close()
+
+        n_workers = int(self.cfg.get("count_process") or 1)
+        chunks = chunk_list(ids, n_workers)
+
+        processes = []
+        for wid, chunk in enumerate(chunks):
+            p = Process(target=self._process_rows, args=(chunk, wid))
+            p.start()
+            processes.append(p)
+
+        for p in processes:
+            p.join()
+
+        self.save_to_excel()

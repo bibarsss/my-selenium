@@ -8,7 +8,7 @@ def run(browser: Browser, data):
     parsed_data = get_result_data(items)
     if parsed_data is None:
         raise Exception('Динамика хода рассмотрения дела ПУСТАЯ!')
-    
+
     return parsed_data
 
 def get_dynamic_review_items(browser):
@@ -41,20 +41,24 @@ def get_dynamic_review_items(browser):
 
 def get_result_data(items):
     for item in reversed(items):
-        result = get_result(item['text']) 
+        result = get_result(item['text'])
         if result is not None:
             result_date = item['date']
-            result_sud_name = get_result_sud_name(item['text']) 
+            result_sud_name = get_result_sud_name(item['text'])
             result_number = get_result_number(item['text'])
+            result_text = ''
+            if result in ['решение', 'возврат', 'отклонено']:
+                result_text = item['text']
+
             return {
                 'result': result,
                 'result_date': result_date,
                 'result_sud_name': result_sud_name,
-                'result_number': result_number
+                'result_number': result_number,
+                'result_text': result_text
             }
 
     return None
-    
 
 def get_result_sud_name(text):
     text = text.strip()
@@ -68,7 +72,7 @@ def get_result_sud_name(text):
 def get_result_number(text):
     text = text.replace('\n', ' ')
     match = re.findall(r"№\s*([\d\-\/]+)", text)
-    
+
     if len(match) != 0:
         for m in match:
             if '-' in m and '/' in m:
