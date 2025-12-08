@@ -1,11 +1,25 @@
-from pathlib import Path
-import unicodedata
 import sqlite3
 from common.sqlite import safe_execute
-from office_sud_kz.isk.main import run as iskRun
+from globals import Config
+from office_sud_kz.generateFilesByTemplate.main import run as generatorRun
 from flow_types.baseWithExcel import WithExcelType
 
 class GenerateFilesByTemplateType(WithExcelType):
+    def __init__(self, cfg: Config = None):
+        self.__config_excel_keys_map = {
+                key: {
+                    'table_column': key.lower().replace('generatefiles_excel_key_', ''),
+                    'variable_name': "{" + key.replace('generatefiles_excel_key_', '') + "}"
+                    }
+                for key in cfg.data.keys()
+                if 'generatefiles_excel_key_' in key
+        }
+        super().__init__(cfg)
+
+    @property
+    def config_excel_keys_map(self):
+        return self.__config_excel_keys_map
+
     def label(self)->str:
         return 'Генерация файлов по шаблону'
 
@@ -13,12 +27,26 @@ class GenerateFilesByTemplateType(WithExcelType):
         return 'generate_files_by_template'
 
     def excel_map(self):
-        return {}
+        return {
+            'status': 'excel_status',
+            'status_text': 'excel_status_text'
+        }
 
     def migration(self):
-        print('migration')
-        connection = sqlite3.connect(self.cfg.get('db_name'))
+        base_columns = [
+            'id INTEGER PRIMARY KEY',
+            'excel_line_number INTEGER',
+            'status TEXT',
+            'status_text TEXT',
+            'generated_file_name TEXT'
+        ]
 
+        columns = list(self.config_excel_keys_map.values())
+        columns = [value['table_column'] + ' TEXT' for value in self.config_excel_keys_map.values()]
+        columns = base_columns + columns
+        columns = ",".join(columns)
+
+        connection = sqlite3.connect(self.cfg.get('db_name'))
         cursor = connection.cursor()
 
         cursor.execute(f'''
@@ -26,18 +54,14 @@ class GenerateFilesByTemplateType(WithExcelType):
             ''')
 
         cursor.execute(f'''
-            CREATE TABLE IF NOT EXISTS {self.table_name()}(
-                        id INTEGER PRIMARY KEY,
-                        excel_line_number INTEGER,
-                        status TEXT,
-                        status_text TEXT
+            CREATE TABLE {self.table_name()}(
+                    {columns}
                     )
-                            ''')
+                        ''')
         connection.commit()
         connection.close()
 
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
-        return
         def safe_get(column_name: str) -> str:
             try:
                 idx = self.cfg.index(column_name)
@@ -46,20 +70,14 @@ class GenerateFilesByTemplateType(WithExcelType):
                 return ""
 
         data = {
-            "number": safe_get('isk_excel_number'),
-            "phone_otvet4ik": safe_get('isk_excel_phone_otvet4ik'),
-            "podsudnost": safe_get('isk_excel_podsudnost'),
-            "iin_otvet4ik": safe_get('isk_excel_iin_otvet4ik'),
-            "summaIska": safe_get('isk_excel_summa_iska'),
-            "powlina": safe_get('isk_excel_powlina'),
-            "isk_file_realname": safe_get('isk_excel_file_name') + ".pdf",
             "status": safe_get('excel_status'),
             "status_text": safe_get('excel_status_text'),
+            "generated_file_name": safe_get('generatefiles_excel_generated_file_name'),
             "excel_line_number": i,
         }
 
-        if not all(v is not None and v != 'None' for k, v in data.items() if k not in ['status', 'status_text']):
-            return
+        for key, value in self.config_excel_keys_map.items():
+            data[value['table_column']] = safe_get(key)
 
         columns = ", ".join(data.keys())
         placeholders = ", ".join([":" + key for key in data.keys()])
@@ -67,82 +85,45 @@ class GenerateFilesByTemplateType(WithExcelType):
 
         cursor.execute(query, data)
 
+    def _process_rows(self, ids, worker_id):
+        print(f"[Worker {worker_id}] starting...")
+
+        connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
+        connection.execute("PRAGMA journal_mode=WAL;")
+        connection.execute("PRAGMA synchronous=NORMAL;")
+        connection.execute("PRAGMA busy_timeout = 5000;")
+        connection.row_factory = sqlite3.Row
+
+        placeholder = ','.join('?' * len(ids))
+        rows = connection.execute(f"SELECT * FROM {self.table_name()} WHERE id in ({placeholder})", ids).fetchall()
+
+        for row in rows:
+            excel_line_number = row['excel_line_number']
+            print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
+            self.run(connection, row, worker_id)
+
+        connection.commit()
+        connection.close()
+
     def _get_data(self, row) -> dict | str:
-        return {}
-        number = row['number']
-
-        dir = None
-        for path in Path(".").rglob("*.pdf"):
-            if number in unicodedata.normalize("NFC", path.name):
-                dir = path.parent
-                break
-
-        if not dir:
-            return 'Папка не найдена!'
+        replace = {
+            value['variable_name']: row[value['table_column']]
+            for _, value in self.config_excel_keys_map.items()
+        }
 
         data = {
-            "iin": str(self.cfg.get('iin')).zfill(12),
-            "bin": self.cfg.get('bin'),
-            "phone": self.cfg.get('phone'),
-            "address": self.cfg.get('address'),
-            "detail": self.cfg.get('detail'),
-            "number": number,
-            "dir": str(dir),
-            "phone_otvet4ik": row['phone_otvet4ik'],
-            "podsudnost": row['podsudnost'],
-            "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
-            "summaIska": row['summaIska'],
-            "powlina": row['powlina'],
-            "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),
-            "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
-            "isk_file_realpath": str(dir / row['isk_file_realname']),
+            'replace': replace,
+            'template_file_name': self.cfg.get('generatefiles_template_file_name'),
+            'generated_file_name': row['generated_file_name'] + '.docx'
         }
 
         return data
 
-    def run(self, browser, connection, row, worker_id):
+    def run(self, connection, row, worker_id):
         data = self._get_data(row)
-        if type(data) is str:
-            safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
-            print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
-            return
 
-        while True:
-            try:
-                iskRun(browser, data, worker_id)
-                safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('success', '', row['id']))
-            except Exception as e:
-                safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
-            break
-
-    def start(self):
-        self.migration()
-
-        wb = load_workbook(self.cfg.get('file'))
-        sheet = wb.active
-        rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
-
-        connection = sqlite3.connect(self.cfg.get('db_name') )
-        connection.row_factory = sqlite3.Row
-        cursor = connection.cursor()
-        for i, row in rows:
-            self.insert(row, cursor, i)
-
-        connection.commit()
-
-        ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()} WHERE status != ?", ('success',))]
-        connection.close()
-
-        n_workers = int(self.cfg.get("count_process") or 1)
-        chunks = chunk_list(ids, n_workers)
-
-        processes = []
-        for wid, chunk in enumerate(chunks):
-            p = Process(target=self._process_rows, args=(chunk, wid))
-            p.start()
-            processes.append(p)
-
-        for p in processes:
-            p.join()
-
-        self.save_to_excel()
+        try:
+            generatorRun(data, worker_id)
+            safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('success', '', row['id']))
+        except Exception as e:
+            safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
