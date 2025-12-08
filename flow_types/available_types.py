@@ -25,5 +25,6 @@ excelTypes = {
     2: IskstatusType,
     3: ApplicationType,
     4: SpType,
-    5: DownloadIspListByTalonType
+    5: DownloadIspListByTalonType,
+    9: GenerateFilesByTemplateType
 }
