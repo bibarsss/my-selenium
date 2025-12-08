@@ -47,7 +47,7 @@ def get_result_data(items):
             result_sud_name = get_result_sud_name(item['text'])
             result_number = get_result_number(item['text'])
             result_text = ''
-            if result in ['решение', 'возврат', 'отклонено']:
+            if result in ['возврат', 'отклонено']:
                 result_text = item['text']
 
             return {
