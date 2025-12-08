@@ -4,3 +4,4 @@ pypdf
 requests
 certifi
 urllib3
+python-docx

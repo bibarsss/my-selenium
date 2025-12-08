@@ -6,14 +6,16 @@ from flow_types.baseWithExcel import WithExcelType
 
 class GenerateFilesByTemplateType(WithExcelType):
     def __init__(self, cfg: Config = None):
-        self.__config_excel_keys_map = {
+        if cfg:
+            self.__config_excel_keys_map = {
                 key: {
                     'table_column': key.lower().replace('generatefiles_excel_key_', ''),
                     'variable_name': "{" + key.replace('generatefiles_excel_key_', '') + "}"
                     }
                 for key in cfg.data.keys()
                 if 'generatefiles_excel_key_' in key
-        }
+            }
+
         super().__init__(cfg)
 
     @property
