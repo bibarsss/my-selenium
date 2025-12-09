@@ -7,70 +7,60 @@ on:
       - main
 
 jobs:
-  build_windows:
-    runs-on: windows-latest # GitHub’s Windows runner
-
-    steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2️⃣ Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      # 3️⃣ Install dependencies
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-
-      # 4️⃣ Build EXE using spec (generated on Windows)
-      - name: Build EXE
-        run: |
-          pyinstaller --clean -y --onefile main.py
-          pyinstaller --clean -y main.spec
-
-      # 5️⃣ Upload built EXE as artifact
-      - name: Upload EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: my-windows-exe
-          path: dist/main.exe
-
   build_macos:
-    runs-on: macos-latest # GitHub’s Windows runner
+    runs-on: macos-latest
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
 
-      # 4️⃣ Build EXE using spec (generated on Windows)
       - name: Build EXE
         run: |
           pyinstaller --clean -y --onefile main.py
           pyinstaller --clean -y main.spec
 
-      # 5️⃣ Upload built EXE as artifact
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
-          name: my-windows-exe
+          name: macos-binary
+          path: dist/main
+
+  build_windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build EXE
+        run: |
+          pyinstaller --clean -y --onefile main.py
+          pyinstaller --clean -y main.spec
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
           path: dist/main.exe
