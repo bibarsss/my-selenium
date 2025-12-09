@@ -5,9 +5,6 @@ from pathlib import Path
 import re
 import shutil
 import sqlite3
-import time
-
-import requests
 from common.read_pdf import read
 from common.sqlite import safe_execute
 from flow_types.baseWithoutExcel import WithoutExcelType
