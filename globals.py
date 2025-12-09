@@ -8,7 +8,7 @@ class Data:
 
     def get(self, key: str):
         return self.data.get(key, None)
-    
+
     def index(self, key:str):
         return int(self.data[key]) - 1
 
@@ -32,7 +32,11 @@ class Podsudnost(Data):
         super().__init__()
 
     def load_json(self):
-        with open("podsudnost.json", "r", encoding="utf-8") as f:
-            self.data = json.load(f)
+        try:
+            with open("podsudnost.json", "r", encoding="utf-8") as f:
+                self.data = json.load(f)
+        except Exception:
+            self.data = {}
+            print("Файл 'podsudnost.json' не найдено!")
 
         return self
