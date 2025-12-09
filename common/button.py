@@ -6,7 +6,8 @@ from browser.browser import Browser
 
 def clickByText(browser: Browser, tag: str, text: str):
     # xpath = f'//{tag}[contains(text(), "{text}")]'
-    xpath = f'//a[normalize-space()="{text}"]'
+    # xpath = f'//a[normalize-space()="{text}"]'
+    xpath = f'//{tag}[contains(normalize-space(), "{text}")]'
     _clickByXpath(browser, xpath)
 
 def clickLinkByHref(browser: Browser, href: str):

@@ -21,7 +21,7 @@ def run(browser: Browser, data)->bool:
 
     browser.refresh()
 
-# должник 
+# должник
     c = 0
     while not isModalOpened(browser, 'selectSideModalDialog'):
         c += 1
@@ -49,7 +49,7 @@ def run(browser: Browser, data)->bool:
         browser.wait_for_loader_done()
 
     c = 0
-    while not verifyModalRowValue(browser, divId, 3, data['iin_dolzhnik']): 
+    while not verifyModalRowValue(browser, divId, 3, data['iin_dolzhnik']):
         c += 1
         if c == RETRY_COUNT:
             raise Exception("Ошибка в step1")
@@ -63,7 +63,7 @@ def run(browser: Browser, data)->bool:
 
     browser.refresh()
 
-# юрлицо взыскатель 
+# юрлицо взыскатель
     c = 0
     while not isModalOpened(browser, 'selectSideModalDialog'):
         c += 1
@@ -122,7 +122,7 @@ def run(browser: Browser, data)->bool:
 
     browser.wait_for_loader_done()
     divId = "fizModalDialog"
-    
+
     c = 0
     while not isModalOpened(browser, divId):
         c += 1
@@ -148,16 +148,16 @@ def run(browser: Browser, data)->bool:
         c += 1
         if c == RETRY_COUNT:
             raise Exception("Ошибка в step1")
-        textModalByRow(browser, divId, 3, data['iin'])  
+        textModalByRow(browser, divId, 3, data['iin'])
         browser.wait_for_loader_done()
         clickButtonByRow(browser, divId, 3)
         browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 9, data['phone'])  
+        textModalByRow(browser, divId, 9, data['phone'])
         browser.wait_for_loader_done()
 
     clickFooterButtonByValue(browser, divId, "Сохранить")
     browser.wait_for_loader_done()
-    
+
     browser.refresh()
 
     podsudnost = getPodsudnostValue(data['podsudnost'])
@@ -167,7 +167,7 @@ def run(browser: Browser, data)->bool:
 
     if not bool(sudValue) or not bool(sudName):
         raise Exception('Подсудность в справочнике не найдены')
-    
+
     c = 0
     while not isSelectedByLabel(browser, "Область (столица, город республиканского значения)", oblastValue) or not isSelectedByLabel(browser, "Судебный орган", sudValue):
         c += 1
@@ -198,7 +198,7 @@ def isModalOpened(browser: Browser, modal_id: str) -> bool:
         return "in" in modal.get_attribute("class").split()
     except:
         return False
-    
+
 def verifyModalRowValue(browser: Browser, div_id: str, row_index: int, expected: str) -> bool:
     xpath = f"(//div[@id='{div_id}']//tbody/tr)[{row_index}]//input | (//div[@id='{div_id}']//tbody/tr)[{row_index}]//textarea"
     el = browser.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))

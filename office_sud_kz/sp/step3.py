@@ -40,7 +40,7 @@ def run(browser: Browser, data)->bool:
         browser.wait_for_loader_done()
 
     return True
-    
+
 def parse(text):
     result = {}
 
