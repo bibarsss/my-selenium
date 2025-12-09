@@ -2,13 +2,11 @@ import globals
 from flow_types.available_types import types, excelTypes
 
 def run():
-    print('Открываем файл config.txt...')
     try:
         cfg = globals.Config().load_config()
-        print('Конфигурация загружена!')
     except Exception as e:
         print("Файл config.txt не найден!")
-        return
+        cfg = globals.Config()
 
     options = ".\n".join(f"{k} -> {v().label()}" for k, v in types.items())
     full_options = options + ".\n111 -> Перезапуск если не получил файл."

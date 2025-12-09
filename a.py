@@ -1,4 +1,13 @@
+# import sqlite3
 
+
+# connection = sqlite3.connect("database_sud.db")
+# connection.row_factory = sqlite3.Row
+# cursor = connection.cursor()
+
+# ids = [r[0] for r in cursor.execute(f"SELECT id FROM move_talon WHERE talon IS NULL")]
+# connection.close()
+# print(ids)
 # import requests
 
 # import os

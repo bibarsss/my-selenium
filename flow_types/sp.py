@@ -9,7 +9,7 @@ import unicodedata
 
 class SpType(WithExcelType):
     def browser(self):
-        return Browser(True)
+        return Browser(True, 'downloads_sp')
 
     def label(self)->str:
         return 'Заявление о вынесении судебного приказа'
