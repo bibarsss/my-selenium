@@ -51,6 +51,7 @@ class MoveTalonType(WithoutExcelType):
         safe_execute(connection, query, params)
 
     def start(self):
+        print('Смотрим папки и подпапки...')
         self.migration()
 
         connection = sqlite3.connect(self.cfg.get('db_name') )
@@ -71,17 +72,17 @@ class MoveTalonType(WithoutExcelType):
         ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()}")]
         connection.close()
 
-        # n_workers = 10
-        n_workers = 1
+        n_workers = 10
         chunks = self.chunk_list(ids, n_workers)
 
-        move_files_processes = []
+        print('Парсим файлы...')
+        parse_files_processes = []
         for wid, chunk in enumerate(chunks):
             p = Process(target=self._parse_files, args=(chunk, wid))
             p.start()
-            move_files_processes.append(p)
+            parse_files_processes.append(p)
 
-        for p in move_files_processes:
+        for p in parse_files_processes:
             p.join()
 
 
@@ -95,6 +96,7 @@ class MoveTalonType(WithoutExcelType):
 
         chunks = self.chunk_list(ids, n_workers)
 
+        print('Перемещаем файлы...')
         move_files_processes = []
         for wid, chunk in enumerate(chunks):
             p = Process(target=self._move_files, args=(chunk, wid))

@@ -2,6 +2,7 @@ import globals
 from flow_types.available_types import types, excelTypes
 
 def run():
+    print('Запуск...')
     try:
         cfg = globals.Config().load_config()
     except Exception as e:
