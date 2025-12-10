@@ -51,13 +51,13 @@ class RenamePdfType(WithoutExcelType):
         chunks = self.chunk_list(ids, n_workers)
         rename_files = []
         for wid, chunk in enumerate(chunks):
-            p = Process(target=self._parse_files, args=(chunk, wid))
+            p = Process(target=self._rename_files, args=(chunk, wid))
             p.start()
             rename_files.append(p)
         for p in rename_files:
             p.join()
 
-    def _parse_files(self, ids, worker_id):
+    def _rename_files(self, ids, worker_id):
         print(f"[Worker {worker_id}] starting...")
 
         connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)

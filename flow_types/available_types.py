@@ -11,6 +11,7 @@ from flow_types.moveTalon import MoveTalonType
 from flow_types.renameIsk import RenameIskType
 from flow_types.renamePdf import RenamePdfType
 from flow_types.getExcelFromPdf import GetExcelFromPdfType
+from flow_types.converter import ConverterType
 
 types = {
     1: IskType,
@@ -25,7 +26,8 @@ types = {
     10: MoveTalonType,
     11: RenameIskType,
     12: RenamePdfType,
-    13: GetExcelFromPdfType
+    13: GetExcelFromPdfType,
+    14: ConverterType
 }
 
 excelTypes = {
