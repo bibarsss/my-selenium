@@ -3,7 +3,6 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 import re
-import shutil
 import sqlite3
 from common.read_pdf import read
 from common.sqlite import safe_execute

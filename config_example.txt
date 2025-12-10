@@ -1,10 +1,21 @@
-file=600.xlsx
+file=
+db_name=
+count_process=
+# 0=
+show_browser=
+
 iin=
 password=
 phone=
+
+excel_status=
+excel_status_text=
+
 bin=
-address=А
+address=
 detail=
+
+#настройки ИСК
 isk_file_name=
 isk_powlina_file_name=
 isk_excel_number=
@@ -14,3 +25,54 @@ isk_excel_iin_otvet4ik=
 isk_excel_summa_iska=
 isk_excel_powlina=
 isk_excel_phone_otvet4ik=
+
+#настройки для проверки статуса ИСК
+iskstatus_excel_talon=
+iskstatus_excel_result=
+iskstatus_excel_result_sud_name=
+iskstatus_excel_result_date=
+iskstatus_excel_result_number=
+iskstatus_excel_result_text=
+
+#ходатайство
+application_istcy_po_delu=
+application_excel_iin=
+application_excel_podsudnost=
+application_excel_nomer_dela=
+application_excel_otvet4ik_po_delu=
+
+#скачивание исп лист с ск
+download_ispol_list_excel_talon=
+
+#СП
+sp_file_name=
+sp_excel_file_name=
+sp_powlina_file_name=
+sp_excel_number=
+sp_excel_podsudnost=
+sp_excel_iin_dolzhnik=
+sp_excel_powlina=
+sp_excel_summa_iska=
+
+#Переместить папки через 2 подпапки
+moveby2subfolder_main_folder_name=
+moveby2subfolder_excel_search_text=
+moveby2subfolder_excel_sud_folder_name=
+moveby2subfolder_excel_client_folder_name=
+
+#Перемещение одного файла
+moveonefile_file_name=
+moveonefile_excel_search_text=
+
+#Cкачиванием файлов с ск Письмо
+download_ispol_list_pismo_date_start=
+download_ispol_list_pismo_date_end=
+
+#Генерация файлов по шаблону
+generatefiles_template_file_name=
+generatefiles_excel_generated_file_name=
+generatefiles_excel_key_biba=
+generatefiles_excel_key_full_name=
+
+#Перемещение талонов по папкам где лежат blank.pdf файлы
+movetalon_folder_name=
