@@ -8,5 +8,5 @@ def read(file_path: str)->str:
         text = page.extract_text()
         if text:
             full_text += text + "\n"
-    
+
     return full_text

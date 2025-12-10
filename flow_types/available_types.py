@@ -9,6 +9,7 @@ from flow_types.moveOneFile import MoveOneFileType
 from flow_types.generateFilesByTemplate import GenerateFilesByTemplateType
 from flow_types.moveTalon import MoveTalonType
 from flow_types.renameIsk import RenameIskType
+from flow_types.renamePdf import RenamePdfType
 
 types = {
     1: IskType,
@@ -21,7 +22,8 @@ types = {
     8: MoveBy2SubfolderType,
     9: MoveOneFileType,
     10: MoveTalonType,
-    11: RenameIskType
+    11: RenameIskType,
+    12: RenamePdfType
 }
 
 excelTypes = {

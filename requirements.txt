@@ -1,3 +1,4 @@
+git+https://github.com/jstockwin/py-pdf-parser.git
 selenium==4.38.0
 openpyxl
 pypdf
@@ -6,3 +7,4 @@ certifi
 urllib3
 python-docx
 docx
+pandas
