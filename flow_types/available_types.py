@@ -16,9 +16,9 @@ types = {
     4: SpType,
     5: DownloadIspListByTalonType,
     6: DownloadIskListPismoType,
-    7: MoveBy2SubfolderType,
-    8: MoveOneFileType,
-    9: GenerateFilesByTemplateType,
+    7: GenerateFilesByTemplateType,
+    8: MoveBy2SubfolderType,
+    9: MoveOneFileType,
     10: MoveTalonType
 }
 
@@ -28,5 +28,5 @@ excelTypes = {
     3: ApplicationType,
     4: SpType,
     5: DownloadIspListByTalonType,
-    9: GenerateFilesByTemplateType
+    6: GenerateFilesByTemplateType
 }
