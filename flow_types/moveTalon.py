@@ -129,7 +129,8 @@ class MoveTalonType(WithoutExcelType):
             target_folder = Path(row['folder_path'])
 
             if talon_file.exists():
-                shutil.move(str(talon_file), str(target_folder / talon_file.name))
+                target_file = target_folder / talon_file.name
+                os.replace(talon_file, target_file)
 
     def _parse_files(self, ids, worker_id):
         print(f"[Worker {worker_id}] starting...")
