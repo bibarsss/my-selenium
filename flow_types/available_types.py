@@ -10,6 +10,7 @@ from flow_types.generateFilesByTemplate import GenerateFilesByTemplateType
 from flow_types.moveTalon import MoveTalonType
 from flow_types.renameIsk import RenameIskType
 from flow_types.renamePdf import RenamePdfType
+from flow_types.getExcelFromPdf import GetExcelFromPdfType
 
 types = {
     1: IskType,
@@ -23,7 +24,8 @@ types = {
     9: MoveOneFileType,
     10: MoveTalonType,
     11: RenameIskType,
-    12: RenamePdfType
+    12: RenamePdfType,
+    13: GetExcelFromPdfType
 }
 
 excelTypes = {

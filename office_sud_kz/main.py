@@ -35,6 +35,6 @@ def run():
     #     print("Неправильный тип флоу!")
     #     return
 
-    type = 12
+    type = 13
     type = types[type](cfg)
     type.start()

@@ -31,12 +31,6 @@ class RenameIskType(WithoutExcelType):
         connection.commit()
         connection.close()
 
-    def insert(self, data, cursor: sqlite3.Cursor):
-        columns = ", ".join(data.keys())
-        placeholders = ", ".join([":" + key for key in data.keys()])
-        query = f"INSERT INTO {self.table_name()}({columns}) VALUES ({placeholders})"
-        cursor.execute(query, data)
-
     def start(self):
         self.migration()
 
