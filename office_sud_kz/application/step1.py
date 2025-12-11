@@ -1,6 +1,7 @@
-from common.input_select import selectByLabel, isSelectedByLabel 
+import time
+from common.input_select import selectByLabel, isSelectedByLabel
 from common.button import clickByText
-from common.input_text import textByLabel 
+from common.input_text import textByLabel
 from browser.browser import Browser
 from common.podsudnost import getPodsudnostValue
 from common.read_pdf import read
@@ -24,7 +25,7 @@ def run(browser: Browser, data)->bool:
     textByLabel(browser, 'Номер дела', data['nomer_dela'])
     textByLabel(browser, 'Истцы по делу', data['istcy_po_delu'])
     textByLabel(browser, 'Ответчики по делу', data['otvet4ik_po_delu'])
-    
+
     podsudnost = getPodsudnostValue(data['podsudnost'])
     sudValue = podsudnost['sudValue']
     sudName = podsudnost['sudName']
@@ -32,14 +33,16 @@ def run(browser: Browser, data)->bool:
 
     if not bool(sudValue) or not bool(sudName):
         raise Exception('Подсудность в справочнике не найдены')
-    
+
     c = 0
-    while not isSelectedByLabel(browser, "Область (столица, город республиканского значения)", oblastValue) or not isSelectedByLabel(browser, "Судебный орган", sudValue):
+    while not isSelectedByLabel(browser, "Область (столица, город республиканского значения)", oblastValue) \
+            or not isSelectedByLabel(browser, "Судебный орган", sudValue):
         c += 1
         if c == RETRY_COUNT:
             raise Exception("Ошибка в step1")
         selectByLabel(browser, "Область (столица, город республиканского значения)", oblastValue)
         browser.wait_for_loader_done()
+        time.sleep(2)
         if not browser.htmlHasText(sudName):
             continue
         browser.wait_for_loader_done()
@@ -61,10 +64,10 @@ def run(browser: Browser, data)->bool:
         if browser.htmlHasText("Предпросмотр электронного бланка"):
             clicked = True
             break
-    
+
         clickByText(browser, 'a' ,'Далее')
         browser.wait_for_loader_done()
-    
+
     if not clicked:
         raise Exception('Не смог заполнить все поля в 1 стадии')
 
