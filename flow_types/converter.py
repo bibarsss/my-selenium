@@ -1,18 +1,13 @@
 # Cкачиванием файлов с ск Письмо
-from datetime import datetime
 from multiprocessing import Process
-import os
 from pathlib import Path
-import re
 import sqlite3
-
 import requests
-from common.read_pdf import read
 from flow_types.baseWithoutExcel import WithoutExcelType
 
 class ConverterType(WithoutExcelType):
     def label(self):
-        return 'Конвертирование '
+        return 'Конвертирование .docx на .pdf'
 
     def table_name(self)->str:
         return 'converter'
