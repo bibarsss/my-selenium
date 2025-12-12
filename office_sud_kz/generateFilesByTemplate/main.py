@@ -50,12 +50,12 @@ def withGroup(data: list, worker_id):
 
     new_replace = data['replace'][0].copy()
     for key_template, template in data['replace_template'].items():
-        temp = template
         new_replace[key_template] = ''
 
         count = 0
         for replace in data['replace']:
             count += 1
+            temp = template
             for k, v in replace.items():
                 temp = temp.replace(k, v)
             new_replace[key_template] += f"{count}. {temp}\n\n"
