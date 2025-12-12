@@ -188,10 +188,7 @@ class GenerateFilesByTemplateType(WithExcelType):
                 self.run(connection, row, worker_id)
         else:
             for group_id in ids:
-
                 print(f"[Worker {worker_id}] group: {group_id} -> start")
-                print(group_id)
-
                 group_rows = connection.execute(
                     f"SELECT * FROM {self.table_name()} WHERE group_id = ? AND status != 'success'",
                     (group_id,)

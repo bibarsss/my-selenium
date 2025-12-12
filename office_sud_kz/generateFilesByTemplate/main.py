@@ -58,7 +58,7 @@ def withGroup(data: list, worker_id):
             temp = template
             for k, v in replace.items():
                 temp = temp.replace(k, v)
-            new_replace[key_template] += f"{count}. {temp}\n\n"
+            new_replace[key_template] += f"{count}. {temp}"
 
     doc = Document(data['template_file_name'])
     for paragraph in doc.paragraphs:
