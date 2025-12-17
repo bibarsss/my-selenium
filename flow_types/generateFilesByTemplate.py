@@ -5,6 +5,7 @@ from common.sqlite import safe_execute
 from globals import Config
 from office_sud_kz.generateFilesByTemplate.main import withoutGroup, withGroup
 from flow_types.baseWithExcel import WithExcelType
+from datetime import datetime, date
 
 class GenerateFilesByTemplateType(WithExcelType):
     def __init__(self, cfg: Config = None):
@@ -90,8 +91,18 @@ class GenerateFilesByTemplateType(WithExcelType):
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
         def safe_get(column_name: str) -> str:
             try:
+                # idx = self.cfg.index(column_name)
+                # return str(row[idx].value) if row[idx].value is not None else ""
                 idx = self.cfg.index(column_name)
-                return str(row[idx].value) if row[idx].value is not None else ""
+                value = row[idx].value
+
+                if value is None:
+                    return ""
+
+                if isinstance(value, (datetime, date)):
+                    return value.strftime("%d.%m.%Y")
+
+                return str(value)
             except (ValueError, IndexError):
                 return ""
 
