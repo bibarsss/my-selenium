@@ -102,6 +102,9 @@ class GenerateFilesByTemplateType(WithExcelType):
                 if isinstance(value, (datetime, date)):
                     return value.strftime("%d.%m.%Y")
 
+                if isinstance(value, float):
+                    return f"{value:.2f}".rstrip('0').rstrip('.')
+
                 return str(value)
             except (ValueError, IndexError):
                 return ""
