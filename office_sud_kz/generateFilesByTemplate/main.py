@@ -27,12 +27,12 @@ def withoutGroup(data: dict, worker_id):
 
     doc.save(output_path)
 
-def withoutGroupp(data: dict, worker_id):
-    output_dir = "generated_files"
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, data['generated_file_name'])
+# def withoutGroupp(data: dict, worker_id):
+#     output_dir = "generated_files"
+#     os.makedirs(output_dir, exist_ok=True)
+#     output_path = os.path.join(output_dir, data['generated_file_name'])
 
-    doc = Document(data['template_file_name'])
+#     doc = Document(data['template_file_name'])
 
     # for paragraph in doc.paragraphs:
     #     for key, val in data['replace'].items():
@@ -75,7 +75,7 @@ def withoutGroupp(data: dict, worker_id):
     #                 new_run = paragraph.add_run(text)
     #                 set_times_new_roman(new_run)
 
-    doc.save(output_path)
+    # doc.save(output_path)
 
 def withGroup(data: list, worker_id):
     output_dir = "generated_files"
@@ -97,16 +97,24 @@ def withGroup(data: list, worker_id):
 
     doc = Document(data['template_file_name'])
     for paragraph in doc.paragraphs:
-        text = paragraph.text
-
         for key, val in new_replace.items():
-            text = text.replace(key, val)
+            if key in paragraph.text:
+                paragraph.text = paragraph.text.replace(key, val)
+                # override formatting of the new run
+                if paragraph.runs:
+                    set_times_new_roman(paragraph.runs[0])
 
-        for r in paragraph.runs:
-            r.clear()
+    # for paragraph in doc.paragraphs:
+    #     text = paragraph.text
 
-        new_run = paragraph.add_run(text)
-        set_times_new_roman(new_run)
+    #     for key, val in new_replace.items():
+    #         text = text.replace(key, val)
+
+    #     for r in paragraph.runs:
+    #         r.clear()
+
+    #     new_run = paragraph.add_run(text)
+    #     set_times_new_roman(new_run)
 
     # for table in doc.tables:
     #     for row in table.rows:
