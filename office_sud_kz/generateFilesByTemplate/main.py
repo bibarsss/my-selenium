@@ -3,8 +3,11 @@ import os
 from docx.shared import Pt
 from docx.oxml.ns import qn
 
+
 def set_times_new_roman(run):
     run.font.name = "Times New Roman"
+    run.font.italic = False         # 🔥 important
+    # run.font.bold = False           # optional
     run._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
 
 def withoutGroup(data: dict, worker_id):
@@ -15,16 +18,47 @@ def withoutGroup(data: dict, worker_id):
     doc = Document(data['template_file_name'])
 
     for paragraph in doc.paragraphs:
-        text = paragraph.text
-
         for key, val in data['replace'].items():
-            text = text.replace(key, val)
+            if key in paragraph.text:
+                paragraph.text = paragraph.text.replace(key, val)
+                # override formatting of the new run
+                if paragraph.runs:
+                    set_times_new_roman(paragraph.runs[0])
 
-        for r in paragraph.runs:
-            r.clear()
+    doc.save(output_path)
 
-        new_run = paragraph.add_run(text)
-        set_times_new_roman(new_run)
+def withoutGroupp(data: dict, worker_id):
+    output_dir = "generated_files"
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, data['generated_file_name'])
+
+    doc = Document(data['template_file_name'])
+
+    # for paragraph in doc.paragraphs:
+    #     for key, val in data['replace'].items():
+    #         if key in paragraph.text:
+    #             paragraph.text = paragraph.text.replace(key, val)
+
+    # for paragraph in doc.paragraphs:
+    #     text = paragraph.text
+
+    #     for r in paragraph.runs:
+    #         r.clear()
+
+    #     new_run = paragraph.add_run(text)
+    #     set_times_new_roman(new_run)
+
+    # for paragraph in doc.paragraphs:
+    #     text = paragraph.text
+
+    #     for key, val in data['replace'].items():
+    #         text = text.replace(key, val)
+
+    #     for r in paragraph.runs:
+    #         r.clear()
+
+    #     new_run = paragraph.add_run(text)
+    #     set_times_new_roman(new_run)
 
     # for table in doc.tables:
     #     for row in table.rows:

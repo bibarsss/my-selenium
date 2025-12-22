@@ -1,4 +1,4 @@
-from office_sud_kz.main import run as officeSudRunner 
+from office_sud_kz.main import run as officeSudRunner
 import multiprocessing
 
 def main():
