@@ -1,11 +1,22 @@
+from multiprocessing import Process
 from pathlib import Path
 import unicodedata
 import sqlite3
+
+from openpyxl import load_workbook
 from common.sqlite import safe_execute
 from office_sud_kz.isk.main import run as iskRun
 from flow_types.baseWithExcel import WithExcelType
 
 class IskType(WithExcelType):
+    @property
+    def type(self):
+        return self.__type
+
+    @type.setter
+    def type(self, value):
+        self.__type = value
+
     def label(self)->str:
         return 'ИСК'
 
@@ -28,6 +39,7 @@ class IskType(WithExcelType):
         cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
+                        group_id TEXT,
                         excel_line_number INTEGER,
                         iin_otvet4ik TEXT NOT NULL,
                         number TEXT NOT NULL,
@@ -62,6 +74,7 @@ class IskType(WithExcelType):
             "status": safe_get('excel_status'),
             "status_text": safe_get('excel_status_text'),
             "excel_line_number": i,
+            "group_id": safe_get('isk_excel_group_id')
         }
 
         if not all(v is not None and v != 'None' for k, v in data.items() if k not in ['status', 'status_text']):
@@ -73,40 +86,163 @@ class IskType(WithExcelType):
 
         cursor.execute(query, data)
 
-    def _get_data(self, row) -> dict | str:
-        number = row['number']
-
-        dir = None
-        for path in Path(".").rglob("*.pdf"):
-            if number in unicodedata.normalize("NFC", path.name):
-                dir = path.parent
-                break
-
-        if not dir:
-            return 'Папка не найдена!'
-
-        data = {
-            "iin": str(self.cfg.get('iin')).zfill(12),
-            "bin": self.cfg.get('bin'),
-            "phone": self.cfg.get('phone'),
-            "address": self.cfg.get('address'),
-            "detail": self.cfg.get('detail'),
-            "number": number,
-            "dir": str(dir),
-            "phone_otvet4ik": row['phone_otvet4ik'],
-            "podsudnost": row['podsudnost'],
-            "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
-            "summaIska": row['summaIska'],
-            "powlina": row['powlina'],
-            "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),
-            "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
-            "isk_file_realpath": str(dir / row['isk_file_realname']),
+    def start(self):
+        types = {
+            1: 'Без группировки',
+            2: 'С группировкой',
         }
+        options = ".\n".join(f"{k} -> {v}" for k, v in types.items())
+        try:
+            print('==========================')
+            print(options)
+            print('==========================')
 
-        return data
+            self.type = int(input(f"Введите тип флоу: "))
+            if self.type not in types.keys():
+                print("Неправильный тип флоу: ", self.type)
+                return
+        except Exception as e:
+            print("Неправильный тип флоу!")
+            return
+
+        self.migration()
+
+        wb = load_workbook(self.cfg.get('file'))
+        sheet = wb.active
+        rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
+
+        connection = sqlite3.connect(self.cfg.get('db_name') )
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        for i, row in rows:
+            self.insert(row, cursor, i)
+
+        connection.commit()
+
+        # ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()} WHERE status != ?", ('success',))]
+        if self.type == 1:
+            ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()} WHERE status != ?", ('success',))]
+        else:
+            ids = [r[0] for r in cursor.execute(f"SELECT DISTINCT group_id FROM {self.table_name()} WHERE status != ? and group_id != ?", ('success','',))]
+        connection.close()
+
+        n_workers = int(self.cfg.get("count_process") or 1)
+        chunks = self.chunk_list(ids, n_workers)
+        processes = []
+
+        for wid, chunk in enumerate(chunks):
+            p = Process(target=self._process_rows, args=(chunk, wid))
+            p.start()
+            processes.append(p)
+
+        for p in processes:
+            p.join()
+
+        self.save_to_excel()
+
+    def _process_rows(self, ids, worker_id):
+        from office_sud_kz.auth import auth
+
+        print(f"[Worker {worker_id}] starting...")
+        browser = self.browser()
+
+        # while True:
+        #     try:
+        #         browser.main_office_sud_kz()
+        #         auth(browser, self.cfg)
+        #         break
+        #     except Exception:
+        #         continue
+
+        connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
+        connection.execute("PRAGMA journal_mode=WAL;")
+        connection.execute("PRAGMA synchronous=NORMAL;")
+        connection.execute("PRAGMA busy_timeout = 5000;")
+        connection.row_factory = sqlite3.Row
+
+        if self.type == 1:
+            placeholder = ','.join('?' * len(ids))
+            rows = connection.execute(f"SELECT * FROM {self.table_name()} WHERE id in ({placeholder})", ids).fetchall()
+
+            for row in rows:
+                if int(row['id']) % 10 == 0:
+                    browser.refresh()
+
+                excel_line_number = row['excel_line_number']
+                print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
+                self.run(browser, connection, row, worker_id)
+        else:
+            for group_id in ids:
+                print(f"[Worker {worker_id}] group: {group_id} -> start")
+                group_rows = connection.execute(
+                    f"SELECT * FROM {self.table_name()} WHERE group_id = ? AND status != 'success'",
+                    (group_id,)
+                ).fetchall()
+                self.run(browser, connection, group_rows, worker_id)
+
+        connection.commit()
+        connection.close()
+        browser.driver.quit()
+
+    def _get_data(self, data) -> dict | str:
+        def get_data_for_one(self, row):
+            number = row['number']
+
+            dir = None
+            for path in Path(".").rglob("*.pdf"):
+                if number in unicodedata.normalize("NFC", path.name):
+                    dir = path.parent
+                    break
+
+            if not dir:
+                return 'Папка не найдена!'
+
+            if self.type == 1:
+                data = {
+                    "iin": str(self.cfg.get('iin')).zfill(12),
+                    "bin": self.cfg.get('bin'),
+                    "phone": self.cfg.get('phone'),
+                    "address": self.cfg.get('address'),
+                    "detail": self.cfg.get('detail'),
+                    "number": number,
+                    "dir": str(dir),
+                    "phone_otvet4ik": row['phone_otvet4ik'],
+                    "podsudnost": row['podsudnost'],
+                    "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
+                    "summaIska": row['summaIska'],
+                    "powlina": row['powlina'],
+                    "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),
+                    "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
+                    "isk_file_realpath": str(dir / row['isk_file_realname']),
+                }
+            else:
+                data = {
+                    "number": number,
+                    "dir": str(dir),
+                    "phone_otvet4ik": row['phone_otvet4ik'],
+                    "podsudnost": row['podsudnost'],
+                    "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
+                    "summaIska": row['summaIska'],
+                    "powlina": row['powlina'],
+                    "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),
+                    "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
+                    "isk_file_realpath": str(dir / row['isk_file_realname']),
+                }
+
+            return data
+
+        if self.type == 1:
+            return get_data_for_one(self, data)
+        else:
+            pass
+            # for row in data:
+
+
 
     def run(self, browser, connection, row, worker_id):
         data = self._get_data(row)
+        # print('run???')
+        return
         if type(data) is str:
             safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
             print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")

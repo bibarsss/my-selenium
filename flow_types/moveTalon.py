@@ -131,7 +131,12 @@ class MoveTalonType(WithoutExcelType):
                 print(f"[Worker {worker_id}] blank.pdf not Found! [{str(blank_path)}]")
                 continue
 
-            text = read(os.path.abspath(blank_path))
+            try:
+                text = read(os.path.abspath(blank_path))
+            except Exception as e:
+                print(f"[Worker {worker_id}] Talon ERROR! [{str(blank_path)}]")
+                print(e)
+                continue
             match = re.search(r"Құжат нөмірі \(номер документа\):\s*(\d+)", text)
 
             if not match:
