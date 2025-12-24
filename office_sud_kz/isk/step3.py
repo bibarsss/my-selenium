@@ -6,28 +6,35 @@ from browser.browser import Browser
 import re
 import os
 from pathlib import Path
+import time
 
 from globals import RETRY_COUNT
 
 def run(browser: Browser, data)->bool:
-    isk_file_common = Path(data['isk_file_path'])
-    isk_file_real = Path(data['isk_file_realpath'])
+    if data['type'] == 1:
+        isk_file_common = Path(data['rows'][0]['isk_file_path'])
+        isk_file_real = Path(data['rows'][0]['isk_file_realpath'])
+    else:
+        isk_file_common = Path(data['rows'][0]['isk_many_file_path'])
+        isk_file_real = Path(data['rows'][0]['isk_many_file_path'])
 
     if not isk_file_real.exists():
         if not isk_file_common.exists():
-            raise Exception("File not found! " + data['isk_file_path'])
+            raise Exception("File not found! " + str(isk_file_common))
         isk_file_common.rename(isk_file_real)
 
-    parsed = parse_claim(read(os.path.abspath(data['isk_file_realpath'])))
+    parsed = parse_claim(read(str(isk_file_real.resolve())))
 
     textByLabel(browser, 'Исковые требования', parsed['prosim_block'])
     textByLabel(browser, 'Обстоятельства, на которых основаны требования, и доказательства, подтверждающие эти обстоятельства', parsed['contract_block'])
     browser.wait_for_loader_done()
 
-    uploadFile(browser, data['isk_file_realpath'], "selectLawsuitScanUploader")
+    uploadFile(browser, str(isk_file_real), "selectLawsuitScanUploader")
     browser.wait_for_loader_done()
-    uploadAllFilesInDirectory(browser, data['dir'], 'selectFileUploader')
-    browser.wait_for_loader_done()
+
+    for row in data['rows']:
+        uploadAllFilesInDirectory(browser, row['dir'], 'selectFileUploader')
+        browser.wait_for_loader_done()
 
     c = 0
     while not browser.htmlHasText("Предпросмотр электронного бланка"):

@@ -14,10 +14,10 @@ def run(browser: Browser, data)->bool:
         selectByLabel(browser, 'КБК', '2')
         browser.wait_for_loader_done()
 
-    textByLabel(browser, 'Сумма иска', data['summaIska'])
-    textByLabel(browser, 'Сумма государственной пошлины (для расчета воспользуйтесь калькулятором, нажав на иконку в поле ввода)', data['powlina'])
+    textByLabel(browser, 'Сумма иска', data['rows'][0]['summaIska'])
+    textByLabel(browser, 'Сумма государственной пошлины (для расчета воспользуйтесь калькулятором, нажав на иконку в поле ввода)', data['rows'][0]['powlina'])
 
-    uploadFile(browser, data['powlina_file_path'], 'selectPaymentScanUploader1')
+    uploadFile(browser, data['rows'][0]['powlina_file_path'], 'selectPaymentScanUploader1')
     browser.wait_for_loader_done()
 
     c = 0

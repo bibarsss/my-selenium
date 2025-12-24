@@ -146,13 +146,13 @@ class IskType(WithExcelType):
         print(f"[Worker {worker_id}] starting...")
         browser = self.browser()
 
-        # while True:
-        #     try:
-        #         browser.main_office_sud_kz()
-        #         auth(browser, self.cfg)
-        #         break
-        #     except Exception:
-        #         continue
+        while True:
+            try:
+                browser.main_office_sud_kz()
+                auth(browser, self.cfg)
+                break
+            except Exception:
+                continue
 
         connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
         connection.execute("PRAGMA journal_mode=WAL;")
@@ -171,6 +171,8 @@ class IskType(WithExcelType):
                 excel_line_number = row['excel_line_number']
                 print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
                 self.run(browser, connection, row, worker_id)
+                print('break!!!!!!!!!!!!!!!!!!!!!!!')
+                break
         else:
             for group_id in ids:
                 print(f"[Worker {worker_id}] group: {group_id} -> start")
@@ -179,6 +181,8 @@ class IskType(WithExcelType):
                     (group_id,)
                 ).fetchall()
                 self.run(browser, connection, group_rows, worker_id)
+                print('break!!!!!!!!!!!!!!!!!!!!!!!')
+                break
 
         connection.commit()
         connection.close()
@@ -197,61 +201,101 @@ class IskType(WithExcelType):
             if not dir:
                 return 'Папка не найдена!'
 
-            if self.type == 1:
-                data = {
-                    "iin": str(self.cfg.get('iin')).zfill(12),
-                    "bin": self.cfg.get('bin'),
-                    "phone": self.cfg.get('phone'),
-                    "address": self.cfg.get('address'),
-                    "detail": self.cfg.get('detail'),
-                    "number": number,
-                    "dir": str(dir),
-                    "phone_otvet4ik": row['phone_otvet4ik'],
-                    "podsudnost": row['podsudnost'],
-                    "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
-                    "summaIska": row['summaIska'],
-                    "powlina": row['powlina'],
-                    "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),
-                    "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
-                    "isk_file_realpath": str(dir / row['isk_file_realname']),
-                }
-            else:
-                data = {
-                    "number": number,
-                    "dir": str(dir),
-                    "phone_otvet4ik": row['phone_otvet4ik'],
-                    "podsudnost": row['podsudnost'],
-                    "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
-                    "summaIska": row['summaIska'],
-                    "powlina": row['powlina'],
-                    "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),
-                    "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
-                    "isk_file_realpath": str(dir / row['isk_file_realname']),
-                }
+            blank_path = dir
+            isk_many_file_path = row['group_id']
+            if self.type == 2:
+                blank_path = dir.parent
+                isk_many_file_path = dir.parent / Path(str(isk_many_file_path) + ".pdf")
+                if not isk_many_file_path.exists():
+                    return f'В группе {row['group_id']} файл {isk_many_file_path} не найдено!'
+
+            data = {
+                "id": row['id'],
+                "number": number,
+                "dir": str(dir),
+                "phone_otvet4ik": row['phone_otvet4ik'],
+                "podsudnost": row['podsudnost'],
+                "iin_otvet4ik": str(row['iin_otvet4ik']).zfill(12),
+                "summaIska": row['summaIska'],
+                "powlina": row['powlina'],
+                "powlina_file_path": str(dir / self.cfg.get('isk_powlina_file_name')),
+                "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
+                "isk_file_realpath": str(dir / row['isk_file_realname']),
+                'isk_many_file_path': str(isk_many_file_path),
+                'blank_path': str(blank_path)
+            }
 
             return data
 
+        r = {
+            "iin": str(self.cfg.get('iin')).zfill(12),
+            "bin": self.cfg.get('bin'),
+            "phone": self.cfg.get('phone'),
+            "address": self.cfg.get('address'),
+            "detail": self.cfg.get('detail'),
+            'type': self.type,
+            "rows": []
+        }
+
         if self.type == 1:
-            return get_data_for_one(self, data)
+            row_data = get_data_for_one(self, data)
+            if type(row_data) is str:
+                return row_data
+
+            r['rows'].append(row_data)
         else:
-            pass
-            # for row in data:
+            for row in data:
+                row_data = get_data_for_one(self, row)
+                if type(row_data) is str:
+                    return row_data
 
-
+                r['rows'].append(row_data)
+        return r
 
     def run(self, browser, connection, row, worker_id):
         data = self._get_data(row)
-        # print('run???')
-        return
+
         if type(data) is str:
-            safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
-            print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
+            if self.type == 1:
+                safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
+                print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
+            else:
+                ids = [row_data['id'] for row_data in row]  # get all ids from your data
+                placeholders = ",".join("?" for _ in ids)
+                safe_execute(
+                    connection,
+                    f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id IN ({placeholders})",
+                    ('skipped', data, *ids)
+                )
             return
+
+        ids = [r['id'] for r in data['rows']]
+        placeholders = ','.join(['?'] * len(ids))
 
         while True:
             try:
                 iskRun(browser, data, worker_id)
-                safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('success', '', row['id']))
+                query = f"""
+                            UPDATE {self.table_name()}
+                            SET status = ?, status_text = ?
+                            WHERE id IN ({placeholders})
+                        """
+                safe_execute(
+                            connection,
+                            query,
+                            ['success', ''] + ids
+                        )
+                # safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('success', '', row['id']))
             except Exception as e:
-                safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
+                query = f"""
+                            UPDATE {self.table_name()}
+                            SET status = ?, status_text = ?
+                            WHERE id IN ({placeholders})
+                        """
+                safe_execute(
+                    connection,
+                    query,
+                    ['error', str(e)] + ids
+                )
+                # safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
             break
