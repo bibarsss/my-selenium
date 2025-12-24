@@ -171,8 +171,6 @@ class IskType(WithExcelType):
                 excel_line_number = row['excel_line_number']
                 print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
                 self.run(browser, connection, row, worker_id)
-                print('break!!!!!!!!!!!!!!!!!!!!!!!')
-                break
         else:
             for group_id in ids:
                 print(f"[Worker {worker_id}] group: {group_id} -> start")
@@ -181,8 +179,6 @@ class IskType(WithExcelType):
                     (group_id,)
                 ).fetchall()
                 self.run(browser, connection, group_rows, worker_id)
-                print('break!!!!!!!!!!!!!!!!!!!!!!!')
-                break
 
         connection.commit()
         connection.close()

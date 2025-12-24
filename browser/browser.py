@@ -38,7 +38,7 @@ class Browser:
 
         service = Service(driver_path)
         self.driver = webdriver.Chrome(service=service, options=options)
-        self.wait = WebDriverWait(self.driver, 60)
+        self.wait = WebDriverWait(self.driver, 120)
 
     def main_office_sud_kz(self):
         self.safe_get("https://office.sud.kz/")
