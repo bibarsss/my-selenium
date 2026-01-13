@@ -1,3 +1,4 @@
+import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from browser.browser import Browser
@@ -25,7 +26,7 @@ def run(browser: Browser, data, worker_id):
 
     print(f'[Worker {worker_id}] step 1')
     step1.run(browser, data)
-    
+
     print(f'[Worker {worker_id}] step 2')
     step2.run(browser, data)
 
@@ -34,7 +35,7 @@ def run(browser: Browser, data, worker_id):
 
     print(f'[Worker {worker_id}] step 4')
     step4.run(browser, data)
-    
+
     print(f'[Worker {worker_id}] step 5')
     step5.run(browser, data)
 

@@ -1,6 +1,9 @@
 # Заявление о вынесении судебного приказа
+from multiprocessing import Process
 from pathlib import Path
 import sqlite3
+
+from openpyxl import load_workbook
 from office_sud_kz.sp.main import run as spRun
 from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
@@ -8,6 +11,14 @@ from browser.browser import Browser
 import unicodedata
 
 class SpType(WithExcelType):
+    @property
+    def type(self):
+        return self.__type
+
+    @type.setter
+    def type(self, value):
+        self.__type = value
+
     def browser(self):
         return Browser(True, 'downloads_sp')
 
@@ -33,6 +44,7 @@ class SpType(WithExcelType):
         cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
+                        group_id TEXT,
                         excel_line_number INTEGER,
                         number TEXT NOT NULL,
                         podsudnost TEXT,
@@ -65,6 +77,7 @@ class SpType(WithExcelType):
             "sp_file_realname": safe_get('sp_excel_file_name') + ".pdf",
             "status": safe_get('excel_status'),
             "status_text": safe_get('excel_status_text'),
+            "group_id": safe_get('sp_excel_group_id')
             }
 
         columns = ", ".join(data.keys())
@@ -73,61 +86,239 @@ class SpType(WithExcelType):
 
         cursor.execute(query, data)
 
-    def _get_data(self, row) -> dict | str:
-        number = row['number']
+    def start(self):
+        types = {
+            1: 'Без группировки',
+            2: 'С группировкой',
+        }
+        options = ".\n".join(f"{k} -> {v}" for k, v in types.items())
+        try:
+            print('==========================')
+            print(options)
+            print('==========================')
 
-        dir = None
-        for path in Path(".").rglob("*.pdf"):
-            if number in unicodedata.normalize("NFC", path.name):
-                dir = path.parent
+            self.type = int(input(f"Введите тип флоу: "))
+            if self.type not in types.keys():
+                print("Неправильный тип флоу: ", self.type)
+                return
+        except Exception as e:
+            print("Неправильный тип флоу!")
+            return
+
+        self.migration()
+
+        wb = load_workbook(self.cfg.get('file'))
+        sheet = wb.active
+        rows = list(enumerate(sheet.iter_rows(min_row=2, values_only=False), start=2))
+
+        connection = sqlite3.connect(self.cfg.get('db_name') )
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        for i, row in rows:
+            self.insert(row, cursor, i)
+
+        connection.commit()
+
+        # ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()} WHERE status != ?", ('success',))]
+        if self.type == 1:
+            ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()} WHERE status != ?", ('success',))]
+        else:
+            ids = [r[0] for r in cursor.execute(f"SELECT DISTINCT group_id FROM {self.table_name()} WHERE status != ? and group_id != ?", ('success','',))]
+        connection.close()
+
+        n_workers = int(self.cfg.get("count_process") or 1)
+        chunks = self.chunk_list(ids, n_workers)
+        processes = []
+
+        for wid, chunk in enumerate(chunks):
+            p = Process(target=self._process_rows, args=(chunk, wid))
+            p.start()
+            processes.append(p)
+
+        for p in processes:
+            p.join()
+
+        self.save_to_excel()
+
+    def _process_rows(self, ids, worker_id):
+        from office_sud_kz.auth import auth
+
+        print(f"[Worker {worker_id}] starting...")
+        browser = self.browser()
+
+        while True:
+            try:
+                browser.main_office_sud_kz()
+                auth(browser, self.cfg)
                 break
+            except Exception:
+                continue
 
-        if not dir:
-            return 'Папка не найдена!'
+        connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
+        connection.execute("PRAGMA journal_mode=WAL;")
+        connection.execute("PRAGMA synchronous=NORMAL;")
+        connection.execute("PRAGMA busy_timeout = 5000;")
+        connection.row_factory = sqlite3.Row
 
-        data = {
+        if self.type == 1:
+            placeholder = ','.join('?' * len(ids))
+            rows = connection.execute(f"SELECT * FROM {self.table_name()} WHERE id in ({placeholder})", ids).fetchall()
+
+            for row in rows:
+                if int(row['id']) % 10 == 0:
+                    browser.refresh()
+
+                excel_line_number = row['excel_line_number']
+                print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
+                self.run(browser, connection, row, worker_id)
+        else:
+            for group_id in ids:
+                print(f"[Worker {worker_id}] group: {group_id} -> start")
+                group_rows = connection.execute(
+                    f"SELECT * FROM {self.table_name()} WHERE group_id = ? AND status != 'success'",
+                    (group_id,)
+                ).fetchall()
+                self.run(browser, connection, group_rows, worker_id)
+
+        connection.commit()
+        connection.close()
+        browser.driver.quit()
+
+    def _get_data(self, data) -> dict | str:
+        def get_data_for_one(self, row):
+            number = row['number']
+
+            dir = None
+            for path in Path(".").rglob("*.pdf"):
+                if number in unicodedata.normalize("NFC", path.name):
+                    dir = path.parent
+                    break
+
+            if not dir:
+                return 'Папка не найдена!'
+
+            blank_path = dir
+            sp_many_file_path = row['group_id']
+            if self.type == 2:
+                blank_path = dir.parent
+                sp_many_file_path = dir.parent / Path(str(sp_many_file_path) + ".pdf")
+                if not sp_many_file_path.exists():
+                    return f'В группе {row['group_id']} файл {sp_many_file_path} не найдено!'
+
+            data = {
+                "id": row['id'],
+                "number": number,
+                "dir": str(dir),
+                "podsudnost": row['podsudnost'],
+                "iin_dolzhnik": str(row['iin_dolzhnik']).zfill(12),
+                "summaIska": row['summaIska'],
+                "powlina": row['powlina'],
+                "powlina_file_path": str(dir / self.cfg.get('sp_powlina_file_name')),
+                "sp_file_path": str(dir / self.cfg.get('sp_file_name')),
+                "sp_file_realpath": str(dir / row['sp_file_realname']),
+                'sp_many_file_path': str(sp_many_file_path),
+                'blank_path': str(blank_path)
+            }
+
+            return data
+
+        r = {
             "iin": str(self.cfg.get('iin')).zfill(12),
-            "iin_dolzhnik": str(row['iin_dolzhnik']).zfill(12),
-            "phone": self.cfg.get('phone'),
             "bin": self.cfg.get('bin'),
-            "number": number,
-            "podsudnost": row['podsudnost'],
+            "phone": self.cfg.get('phone'),
             "address": self.cfg.get('address'),
             "detail": self.cfg.get('detail'),
-            "dir": str(dir),
-            "powlina": row['powlina'],
-            "summaIska": row['summaIska'],
-            "powlina_file_path": str(dir / self.cfg.get('sp_powlina_file_name')),
-            "sp_file_path": str(dir / self.cfg.get('sp_file_name')),
-            "sp_file_realpath": str(dir / row['sp_file_realname']),
+            'type': self.type,
+            "rows": []
         }
 
-        return data
+        if self.type == 1:
+            row_data = get_data_for_one(self, data)
+            if type(row_data) is str:
+                return row_data
+
+            r['rows'].append(row_data)
+        else:
+            for row in data:
+                row_data = get_data_for_one(self, row)
+                if type(row_data) is str:
+                    return row_data
+
+                r['rows'].append(row_data)
+        return r
 
     def run(self, browser, connection, row, worker_id):
         data = self._get_data(row)
 
         if type(data) is str:
-            safe_execute(connection, f'''UPDATE {self.table_name()} SET
-                            status = ?,
-                            status_text = ?
-                            WHERE id = ?''',
-                            ('skipped', data, row['id']))
-
-            print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
+            if self.type == 1:
+                safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('skipped', data, row['id']))
+                print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
+            else:
+                ids = [row_data['id'] for row_data in row]  # get all ids from your data
+                placeholders = ",".join("?" for _ in ids)
+                safe_execute(
+                    connection,
+                    f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id IN ({placeholders})",
+                    ('skipped', data, *ids)
+                )
             return
 
-        try:
-            spRun(browser, data, worker_id)
-            safe_execute(connection, f'''UPDATE {self.table_name()}
-                        SET status = ?,
-                        status_text = ?
-                        WHERE id = ?
-                        ''',
-                        ('success', '', row['id']))
-        except Exception as e:
-            safe_execute(connection, f'''UPDATE {self.table_name()}
-                        SET status = ?,
-                        status_text = ?
-                        WHERE id = ?''',
-                        ('error', str(e), row['id']))
+        ids = [r['id'] for r in data['rows']]
+        placeholders = ','.join(['?'] * len(ids))
+
+        while True:
+            try:
+                spRun(browser, data, worker_id)
+                query = f"""
+                            UPDATE {self.table_name()}
+                            SET status = ?, status_text = ?
+                            WHERE id IN ({placeholders})
+                        """
+                safe_execute(
+                            connection,
+                            query,
+                            ['success', ''] + ids
+                        )
+                # safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('success', '', row['id']))
+            except Exception as e:
+                query = f"""
+                            UPDATE {self.table_name()}
+                            SET status = ?, status_text = ?
+                            WHERE id IN ({placeholders})
+                        """
+                safe_execute(
+                    connection,
+                    query,
+                    ['error', str(e)] + ids
+                )
+                # safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))
+            break
+
+    # def run(self, browser, connection, row, worker_id):
+    #     data = self._get_data(row)
+
+    #     if type(data) is str:
+    #         safe_execute(connection, f'''UPDATE {self.table_name()} SET
+    #                         status = ?,
+    #                         status_text = ?
+    #                         WHERE id = ?''',
+    #                         ('skipped', data, row['id']))
+
+    #         print(f"[Worker {worker_id}] row: {row['excel_line_number']} -> skipped")
+    #         return
+
+    #     try:
+    #         spRun(browser, data, worker_id)
+    #         safe_execute(connection, f'''UPDATE {self.table_name()}
+    #                     SET status = ?,
+    #                     status_text = ?
+    #                     WHERE id = ?
+    #                     ''',
+    #                     ('success', '', row['id']))
+    #     except Exception as e:
+    #         safe_execute(connection, f'''UPDATE {self.table_name()}
+    #                     SET status = ?,
+    #                     status_text = ?
+    #                     WHERE id = ?''',
+    #                     ('error', str(e), row['id']))

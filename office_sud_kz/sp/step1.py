@@ -19,148 +19,50 @@ def run(browser: Browser, data)->bool:
         selectByLabel(browser, "Характер заявления", "1")
         browser.wait_for_loader_done()
 
-    browser.refresh()
+# юрлицо взыскатель
+    add_process_member(
+        browser,
+        div_id="jurModalDialog",
+        open_selectors=[
+            {"label": "Тип лица", "value": "true"},
+        ],
+        fields=[
+            {"row": 4, "key": "bin", "click_after": True},
+            {"row": 7, "key": "address"},
+            {"row": 8, "key": "detail"},
+        ],
+        data=data,
+    )
+
+# представитель
+    add_process_member(
+        browser,
+        div_id="fizModalDialog",
+        open_selectors=[
+            {"label": "Сторона процесса", "value": "5"},
+        ],
+        fields=[
+            {"row": 3, "key": "iin", "click_after": True},
+            {"row": 9, "key": "phone", "skip_verify": True},
+        ],
+        data=data,
+    )
 
 # должник
-    c = 0
-    while not isModalOpened(browser, 'selectSideModalDialog'):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-        clickByText(browser, 'button', 'Добавить участника процесса')
-        browser.wait_for_loader_done()
+    for row in data['rows']:
+        add_process_member(
+            browser,
+            div_id="fizModalDialog",
+            open_selectors=[
+                {"label": "Сторона процесса", "value": "2"},
+            ],
+            fields=[
+                {"row": 3, "key": "iin_dolzhnik", "click_after": True},
+            ],
+            data={'iin_dolzhnik': row['iin_dolzhnik']},
+        )
 
-    divId = "fizModalDialog"
-
-    c = 0
-    while not isModalOpened(browser, divId):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-        cc = 0
-        while not isSelectedByLabelOnModal(browser, "Сторона процесса", "2"):
-            cc += 1
-            if cc == RETRY_COUNT:
-                raise Exception("Ошибка в step1")
-            selectByLabelOnModal(browser, "Сторона процесса", "2")
-            browser.wait_for_loader_done()
-
-        clickByValue(browser, "Далее")
-        browser.wait_for_loader_done()
-
-    c = 0
-    while not verifyModalRowValue(browser, divId, 3, data['iin_dolzhnik']):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-        textModalByRow(browser, divId, 3, data['iin_dolzhnik'])
-        browser.wait_for_loader_done()
-        clickButtonByRow(browser, divId, 3)
-        browser.wait_for_loader_done()
-
-    clickFooterButtonByValue(browser, divId, "Сохранить")
-    browser.wait_for_loader_done()
-
-    browser.refresh()
-
-# юрлицо взыскатель
-    c = 0
-    while not isModalOpened(browser, 'selectSideModalDialog'):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-        clickByText(browser, 'button', 'Добавить участника процесса')
-        browser.wait_for_loader_done()
-
-    divId = "jurModalDialog"
-    c = 0
-    while not isModalOpened(browser, divId):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-
-        cc = 0
-        while not isSelectedByLabelOnModal(browser, "Тип лица", "true"):
-            cc += 1
-            if cc == RETRY_COUNT:
-                raise Exception("Ошибка в step1")
-
-            selectByLabelOnModal(browser, "Тип лица", "true")
-            browser.wait_for_loader_done()
-
-        clickByValue(browser, "Далее")
-        browser.wait_for_loader_done()
-
-    c = 0
-    while not verifyModalRowValue(browser, divId, 4, data['bin']) \
-        or not verifyModalRowValue(browser, divId, 7, data['address']) \
-        or not verifyModalRowValue(browser, divId, 8, data['detail']):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-        textModalByRow(browser, divId, 4, data['bin'])
-        browser.wait_for_loader_done()
-        clickButtonByRow(browser, divId, 4)
-        browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 7, data['address'])
-        browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 8, data['detail'])
-        browser.wait_for_loader_done()
-
-    clickFooterButtonByValue(browser, divId, "Сохранить")
-    browser.wait_for_loader_done()
-
-    browser.refresh()
-# представитель
-    c = 0
-    while not isModalOpened(browser, 'selectSideModalDialog'):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-        clickByText(browser, 'button', 'Добавить участника процесса')
-        browser.wait_for_loader_done()
-
-    browser.wait_for_loader_done()
-    divId = "fizModalDialog"
-
-    c = 0
-    while not isModalOpened(browser, divId):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-
-        cc = 0
-        while not isSelectedByLabelOnModal(browser, "Сторона процесса", "5"):
-            cc += 1
-            if cc == RETRY_COUNT:
-                raise Exception("Ошибка в step1")
-
-            selectByLabelOnModal(browser, "Сторона процесса", "5")
-            browser.wait_for_loader_done()
-
-        browser.wait_for_loader_done()
-        clickByValue(browser, "Далее")
-        browser.wait_for_loader_done()
-
-    c = 0
-    while not verifyModalRowValue(browser, divId, 3, data['iin']) \
-        and not verifyModalRowValue(browser, divId, 9, data['phone']):
-        c += 1
-        if c == RETRY_COUNT:
-            raise Exception("Ошибка в step1")
-        textModalByRow(browser, divId, 3, data['iin'])
-        browser.wait_for_loader_done()
-        clickButtonByRow(browser, divId, 3)
-        browser.wait_for_loader_done()
-        textModalByRow(browser, divId, 9, data['phone'])
-        browser.wait_for_loader_done()
-
-    clickFooterButtonByValue(browser, divId, "Сохранить")
-    browser.wait_for_loader_done()
-
-    browser.refresh()
-
-    podsudnost = getPodsudnostValue(data['podsudnost'])
+    podsudnost = getPodsudnostValue(data['rows'][0]['podsudnost'])
     sudValue = podsudnost['sudValue']
     sudName = podsudnost['sudName']
     oblastValue = podsudnost['oblastValue']
@@ -205,3 +107,73 @@ def verifyModalRowValue(browser: Browser, div_id: str, row_index: int, expected:
     actual = el.get_attribute("value") or el.text
     is_ok = (actual.strip() == expected.strip())
     return is_ok
+
+def add_process_member(
+    browser,
+    *,
+    div_id: str,
+    open_selectors: list,
+    fields: list,
+    data: dict,
+):
+    browser.refresh()
+
+    # open select-side modal
+    c = 0
+    while not isModalOpened(browser, 'selectSideModalDialog'):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1 (open select modal)")
+        clickByText(browser, 'button', 'Добавить участника процесса')
+        browser.wait_for_loader_done()
+
+    browser.wait_for_loader_done()
+
+    # open target modal (apply selectors)
+    c = 0
+    while not isModalOpened(browser, div_id):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка в step1 (open target modal)")
+
+        for selector in open_selectors:
+            cc = 0
+            while not isSelectedByLabelOnModal(
+                browser,
+                selector["label"],
+                selector["value"],
+            ):
+                cc += 1
+                if cc == RETRY_COUNT:
+                    raise Exception("Ошибка в step1 (select label)")
+                selectByLabelOnModal(
+                    browser,
+                    selector["label"],
+                    selector["value"],
+                )
+                browser.wait_for_loader_done()
+
+        clickByValue(browser, "Далее")
+        browser.wait_for_loader_done()
+
+    # fill modal fields
+    c = 0
+    while not all(
+        verifyModalRowValue(browser, div_id, f["row"], data[f["key"]])
+        for f in fields
+        if not f.get('skip_verify', False)
+    ):
+        c += 1
+        if c == RETRY_COUNT:
+            raise Exception("Ошибка in step1 (fill fields)")
+
+        for f in fields:
+            textModalByRow(browser, div_id, f["row"], data[f["key"]])
+            browser.wait_for_loader_done()
+
+            if f.get("click_after"):
+                clickButtonByRow(browser, div_id, f["row"])
+                browser.wait_for_loader_done()
+
+    clickFooterButtonByValue(browser, div_id, "Сохранить")
+    browser.wait_for_loader_done()

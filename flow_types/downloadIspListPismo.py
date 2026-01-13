@@ -12,6 +12,7 @@ from globals import RETRY_COUNT
 from office_sud_kz.downloadIspListPismo.main import run as pismoRun
 
 class DownloadIskListPismoType(WithoutExcelType):
+    # даты включительно
     def label(self):
         return 'Cкачиванием файлов с ск Письмо'
 
