@@ -47,7 +47,7 @@ class RenamePdfType(WithoutExcelType):
         connection.close()
 
         print('Парсим файлы и переименовываем...')
-        n_workers = 10
+        n_workers = 5
         chunks = self.chunk_list(ids, n_workers)
         rename_files = []
         for wid, chunk in enumerate(chunks):
@@ -88,7 +88,9 @@ class RenamePdfType(WithoutExcelType):
                 if count != 0:
                     new_name = f"{iin}-{count}"
 
-                new_name = prefix + " - " + new_name + '.pdf'
+                new_name = new_name + '.pdf'
+                if prefix != '':
+                    new_name = prefix + " - " + new_name
                 new_path = file_path.with_name(new_name)
 
                 if new_path.exists():
@@ -104,14 +106,18 @@ class RenamePdfType(WithoutExcelType):
                     continue
 
     def get_prefix(self, all_text):
-        if 'постановление' in all_text.lower():
+        all_text = all_text.lower()
+
+        if 'постановление' in all_text:
+            if 'нотариус' in all_text:
+                return 'постановление_об_отмене_исп_надписи'
             return 'постановление'
 
-        if 'исполнительный лист' in all_text.lower():
-            return 'исполнительный_лист'
+        if 'исполнительный лист' in all_text:
+            return 'исп_лист'
 
-        if 'исполнительная надпись' in all_text.lower():
-            return 'исполнительная_надпись'
+        if 'исполнительная надпись' in all_text:
+            return 'исп_надпись'
 
         return ''
 
