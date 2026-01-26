@@ -72,38 +72,39 @@ class RenamePdfType(WithoutExcelType):
         connection.close()
 
         for row in rows:
-            file_path = Path(row['file_path'])
+            try:
+                file_path = Path(row['file_path'])
+                text = read(os.path.abspath(str(file_path)))
+                text = " ".join(text.splitlines())
+                prefix = self.get_prefix(text)
 
-            text = read(os.path.abspath(str(file_path)))
-            text = " ".join(text.splitlines())
-            prefix = self.get_prefix(text)
+                iin = self.extract_iin(text)
+                if not iin:
+                    print('no IIN')
+                    continue
 
-            iin = self.extract_iin(text)
-            if not iin:
+                count = 0
+                while True:
+                    suffix = f"-{count}" if count else ""
+                    name = f"{iin}{suffix}.pdf"
+
+                    if prefix:
+                        name = f"{prefix} - {name}"
+
+                    new_path = file_path.with_name(name)
+
+                    try:
+                        file_path.rename(new_path)
+                        print(f"[Worker {worker_id}] Renamed: {file_path.name} -> {new_path.name}")
+                        break
+
+                    except FileExistsError:
+                        count += 1
+                        continue
+
+            except Exception as e:
+                print(f"[Worker {worker_id}] Couldn't read pdf file: [{file_path}]")
                 continue
-
-            count = 0
-            while True:
-                new_name = f"{iin}"
-                if count != 0:
-                    new_name = f"{iin}-{count}"
-
-                new_name = new_name + '.pdf'
-                if prefix != '':
-                    new_name = prefix + " - " + new_name
-                new_path = file_path.with_name(new_name)
-
-                if new_path.exists():
-                    count += 1
-                    continue
-
-                try:
-                    file_path.rename(new_path)
-                    print(f"[Worker {worker_id}] Renamed: {file_path.name} -> {new_path.name}")
-                    break
-                except Exception:
-                    count += 1
-                    continue
 
     def get_prefix(self, all_text):
         all_text = all_text.lower()
