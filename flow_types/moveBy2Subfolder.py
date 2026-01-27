@@ -14,27 +14,27 @@ class MoveBy2SubfolderType(WithExcelType):
         return {}
 
     def save_to_excel(self):
-        return 
+        return
 
     def migration(self):
         connection = sqlite3.connect(self.cfg.get('db_name'))
         cursor = connection.cursor()
         cursor.execute(f'''
-            DROP TABLE IF EXISTS {self.table_name()} 
+            DROP TABLE IF EXISTS {self.table_name()}
             ''')
 
         cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
                         excel_line_number INTEGER,
-                        search_text TEXT, 
-                        sud_folder_name TEXT, 
+                        search_text TEXT,
+                        sud_folder_name TEXT,
                         client_folder_name TEXT,
                         status TEXT DEFAULT '',
-                        status_text TEXT DEFAULT ''                           
+                        status_text TEXT DEFAULT ''
                     )
                             ''')
-        connection.commit()        
+        connection.commit()
         connection.close()
 
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
@@ -51,13 +51,13 @@ class MoveBy2SubfolderType(WithExcelType):
             'client_folder_name': safe_get('moveby2subfolder_excel_client_folder_name'),
             "excel_line_number": i,
             }
-        
+
         columns = ", ".join(data.keys())
         placeholders = ", ".join([":" + key for key in data.keys()])
         query = f"INSERT INTO {self.table_name()}({columns}) VALUES ({placeholders})"
 
         cursor.execute(query, data)
-            
+
     def _process_rows(self, ids, worker_id):
         print(f"[Worker {worker_id}] starting...")
         connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
@@ -72,7 +72,7 @@ class MoveBy2SubfolderType(WithExcelType):
         for row in rows:
             excel_line_number = row['excel_line_number']
             print(f"[Worker {worker_id}] row: {excel_line_number}")
-            self.run(row)        
+            self.run(row)
 
         connection.commit()
         connection.close()

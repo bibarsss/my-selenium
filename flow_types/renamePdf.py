@@ -80,7 +80,6 @@ class RenamePdfType(WithoutExcelType):
 
                 iin = self.extract_iin(text)
                 if not iin:
-                    print('no IIN')
                     continue
 
                 count = 0
