@@ -71,7 +71,6 @@ class WithExcelType(Type):
             try:
                 browser.main_office_sud_kz()
                 auth(browser, self.cfg)
-                time.sleep(10000)
                 break
             except Exception:
                 continue
