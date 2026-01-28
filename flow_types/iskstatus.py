@@ -20,6 +20,8 @@ class IskstatusType(WithExcelType):
             'result_sud_name': 'iskstatus_excel_result_sud_name',
             'result_number': 'iskstatus_excel_result_number',
             'result_text': 'iskstatus_excel_result_text',
+            'result_otvet4ik_iin': 'iskstatus_excel_result_otvet4ik_iin',
+            'result_otvet4ik_name': 'iskstatus_excel_result_otvet4ik_name',
         }
 
     def migration(self):
@@ -39,6 +41,8 @@ class IskstatusType(WithExcelType):
                         result_sud_name TEXT,
                         result_number TEXT,
                         result_text TEXT,
+                        result_otvet4ik_iin TEXT,
+                        result_otvet4ik_name TEXT,
                         status TEXT,
                         status_text TEXT
                     )
@@ -90,7 +94,9 @@ class IskstatusType(WithExcelType):
                         result_date = ?,
                         result_sud_name = ?,
                         result_number = ?,
-                        result_text = ?
+                        result_text = ?,
+                        result_otvet4ik_iin = ?,
+                        result_otvet4ik_name = ?
                         WHERE id = ?
                         ''',
                         ('success',
@@ -100,6 +106,8 @@ class IskstatusType(WithExcelType):
                         parsed_data['result_sud_name'],
                         parsed_data['result_number'],
                         parsed_data['result_text'],
+                        parsed_data['result_otvet4ik_iin'],
+                        parsed_data['result_otvet4ik_name'],
                         row['id']),)
         except Exception as e:
             safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))

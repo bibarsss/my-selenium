@@ -5,7 +5,7 @@ import re
 
 def run(browser: Browser, data):
     items = get_dynamic_review_items(browser)
-    parsed_data = get_result_data(items)
+    parsed_data = get_result_data(items, browser)
     if parsed_data is None:
         raise Exception('Динамика хода рассмотрения дела ПУСТАЯ!')
 
@@ -39,7 +39,10 @@ def get_dynamic_review_items(browser):
 
     return result
 
-def get_result_data(items):
+def get_result_data(items, browser):
+    # result_otvet4ik_iin = 'iin biba'
+    # result_otvet4ik_name = 'name biba'
+    result_otvet4ik_iin, result_otvet4ik_name = get_otvetchik_data(browser)
     for item in reversed(items):
         result = get_result(item['text'])
         if result is not None:
@@ -55,7 +58,9 @@ def get_result_data(items):
                 'result_date': result_date,
                 'result_sud_name': result_sud_name,
                 'result_number': result_number,
-                'result_text': result_text
+                'result_text': result_text,
+                'result_otvet4ik_iin': result_otvet4ik_iin,
+                'result_otvet4ik_name': result_otvet4ik_name
             }
 
     return None
@@ -99,3 +104,42 @@ def get_result(text):
         return 'иск отправлено'
     else:
         return None
+
+def get_otvetchik_data(browser):
+    try:
+        fieldset = browser.driver.find_element(
+            By.XPATH,
+            "//fieldset[.//div[contains(@class,'fieldset-legend') and contains(., 'Стороны процесса')]]"
+        )
+
+        rows = fieldset.find_elements(By.CSS_SELECTOR, "div.panel-body div.row")
+
+        for row in rows:
+            try:
+                role = row.find_element(
+                    By.XPATH,
+                    ".//div[label[contains(.,'Сторона процесса')]]/p"
+                ).text.strip().lower()
+
+                if role != "ответчик":
+                    continue
+
+                iin = row.find_element(
+                    By.XPATH,
+                    ".//div[label[contains(.,'ИИН/БИН')]]/p"
+                ).text.strip()
+
+                name = row.find_element(
+                    By.XPATH,
+                    ".//div[label[contains(.,'ФИО/Наименование')]]/p"
+                ).text.strip()
+
+                return iin, name
+
+            except NoSuchElementException:
+                continue
+
+    except NoSuchElementException:
+        pass
+
+    return '', ''
