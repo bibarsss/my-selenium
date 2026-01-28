@@ -13,6 +13,7 @@ from flow_types.renamePdf import RenamePdfType
 from flow_types.getExcelFromPdf import GetExcelFromPdfType
 from flow_types.converter import ConverterType
 from flow_types.distributeIspList import DistributeIspListType
+from flow_types.clearRequest import ClearRequestType
 
 types = {
     1: IskType,
@@ -29,7 +30,8 @@ types = {
     12: RenamePdfType,
     13: GetExcelFromPdfType,
     14: ConverterType,
-    15: DistributeIspListType
+    15: DistributeIspListType,
+    16: ClearRequestType
 }
 
 excelTypes = {
