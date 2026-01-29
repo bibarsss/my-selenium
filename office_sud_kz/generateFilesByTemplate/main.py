@@ -1,8 +1,11 @@
+import re
 from docx import Document
 import os
 from docx.shared import Pt
 from docx.oxml.ns import qn
 
+def sanitize(name: str) -> str:
+    return re.sub(r'[<>:"/\\|?*]', '', name.strip())
 
 def set_times_new_roman(run):
     run.font.name = "Times New Roman"
@@ -13,7 +16,7 @@ def set_times_new_roman(run):
 def withoutGroup(data: dict, worker_id):
     output_dir = "generated_files"
     os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, data['generated_file_name'])
+    output_path = os.path.join(output_dir, sanitize(data['generated_file_name']))
 
     doc = Document(data['template_file_name'])
 
@@ -80,7 +83,7 @@ def withoutGroup(data: dict, worker_id):
 def withGroup(data: list, worker_id):
     output_dir = "generated_files"
     os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, data['generated_file_name'])
+    output_path = os.path.join(output_dir, sanitize(data['generated_file_name']))
 
     new_replace = data['replace'][0].copy()
     for key_template, template in data['replace_template'].items():
