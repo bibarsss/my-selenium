@@ -14,6 +14,7 @@ from flow_types.getExcelFromPdf import GetExcelFromPdfType
 from flow_types.converter import ConverterType
 from flow_types.distributeIspList import DistributeIspListType
 from flow_types.clearRequest import ClearRequestType
+from flow_types.getSud import GetSudType
 
 types = {
     1: IskType,
@@ -31,7 +32,8 @@ types = {
     13: GetExcelFromPdfType,
     14: ConverterType,
     15: DistributeIspListType,
-    16: ClearRequestType
+    16: ClearRequestType,
+    17: GetSudType,
 }
 
 excelTypes = {
