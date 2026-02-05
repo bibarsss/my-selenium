@@ -1,5 +1,6 @@
 from multiprocessing import Process
 import sqlite3
+import time
 from flow_types.base import Type
 import os
 import shutil
@@ -74,6 +75,10 @@ class WithExcelType(Type):
                 break
             except Exception:
                 continue
+
+        waiting = 10
+        print(f"[Worker {worker_id}] waiting for {waiting} seconds...")
+        time.sleep(waiting)
 
         connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
         connection.execute("PRAGMA journal_mode=WAL;")
