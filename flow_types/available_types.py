@@ -15,6 +15,7 @@ from flow_types.converter import ConverterType
 from flow_types.distributeIspList import DistributeIspListType
 from flow_types.clearRequest import ClearRequestType
 from flow_types.getSud import GetSudType
+from flow_types.tazalau import TazalauType
 
 types = {
     1: IskType,
@@ -34,6 +35,7 @@ types = {
     15: DistributeIspListType,
     16: ClearRequestType,
     17: GetSudType,
+    18: TazalauType,
 }
 
 excelTypes = {

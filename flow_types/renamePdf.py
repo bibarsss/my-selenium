@@ -114,7 +114,11 @@ class RenamePdfType(WithoutExcelType):
             return 'постановление'
 
         if 'исполнительный лист' in all_text:
-            return 'исп_лист'
+            if 'полное наименование взыскателя и его адрес' in all_text:
+                return 'исп_лист'
+
+            if 'определение' in all_text:
+                return 'определение'
 
         if 'исполнительная надпись' in all_text:
             return 'исп_надпись'
