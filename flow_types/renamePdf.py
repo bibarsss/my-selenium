@@ -126,6 +126,7 @@ class RenamePdfType(WithoutExcelType):
         return ''
 
     def extract_iin(self, text):
+        black_list = ['020116601379']
         def is_probable_iin(num):
             try:
                 datetime.strptime(num[:6], "%y%m%d")
@@ -133,13 +134,17 @@ class RenamePdfType(WithoutExcelType):
             except ValueError:
                 return False
 
-        match = re.search(r'\([^)]+?(\d{12})\)', text)
-        if match:
-            candidate = match.group(1)
-            if is_probable_iin(candidate):
-                return candidate
+        # match = re.search(r'\([^)]+?(\d{12})\)', text)
+        # if match:
+        #     candidate = match.group(1)
+        #     if is_probable_iin(candidate):
+        #         return candidate
 
         for num in re.findall(r'\b\d{12}\b', text):
+            if num in black_list:
+                continue
+
             if is_probable_iin(num):
                 return num
+
         return None

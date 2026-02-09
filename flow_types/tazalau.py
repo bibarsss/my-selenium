@@ -1,5 +1,6 @@
 # Tazalau
 import sqlite3
+import time
 from office_sud_kz.downloadIspListByTalon.main import run as runMain
 from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
@@ -36,9 +37,9 @@ class TazalauType(WithExcelType):
                         id INTEGER PRIMARY KEY,
                         excel_line_number INTEGER,
                         iin TEXT,
-                        data_vnesud TEXT,
-                        data_sud TEXT,
-                        data_vosstanovlenie TEXT,
+                        data_vnesudebnoe TEXT DEFAULT '[]',
+                        data_sudebnoe TEXT DEFAULT '[]',
+                        data_vosstanovlenie TEXT DEFAULT '[]',
                         status TEXT,
                         status_text TEXT
                     )
@@ -97,13 +98,32 @@ class TazalauType(WithExcelType):
         browser.driver.quit()
 
     def run(self, browser, connection, row, worker_id):
-        print('run')
 # {'id': 27, 'excel_line_number': 28, 'iin': '901006402244', 'data_vnesud': None, 'data_sud': None, 'data_vosstanovlenie': None, 'status': '', 'status_text': ''}
-        data = dict(row)
-        print(data)
+        print(dict(row))
         # bankruptcyAndInsolvent = "https://tazalau.qoldau.kz/ru/list/bankruptcy-and-insolvent"
         # bankruptcyAndInsolventName = "Внесудебное банкротство"
         # bankruptcyAndInsolventType = 1
+        iin = row['iin']
+        vnesud_link = f"https://tazalau.qoldau.kz/ru/list/bankruptcy-and-insolvent?flApplicantIin={iin}"
+        # data_vnesud = ''
+        browser.safe_get(vnesud_link)
+        if browser.htmlHasText('Нет записей'):
+            # data_vnesud = 'Нет записей'
+            pass
+        else:
+            print('pass')
+            pass
+
+
+        time.sleep(1000)
+
+        # sud_link = f"https://tazalau.qoldau.kz/ru/list/bankruptcy/judicial?flApplicantXin={iin}"
+        # browser.safe_get(sud_link)
+        # time.sleep(10)
+
+        # vosstanovlenie_link = f"https://tazalau.qoldau.kz/ru/list/bankruptcy/recovery?flApplicantXin={iin}"
+        # browser.safe_get(vosstanovlenie_link)
+        # time.sleep(10)
 
         # data = self._get_data(row)
 

@@ -36,5 +36,6 @@ def run():
         return
 
     # type = 18
+    # type = 12
     type = types[type](cfg)
     type.start()
