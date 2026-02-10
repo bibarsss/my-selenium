@@ -1,10 +1,15 @@
 # Tazalau
+import json
 import sqlite3
 import time
+
+from openpyxl import Workbook
 from office_sud_kz.downloadIspListByTalon.main import run as runMain
 from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
 from browser.browser import Browser
+from selenium.webdriver.common.by import By
+
 
 class TazalauType(WithExcelType):
     def label(self)->str:
@@ -91,82 +96,137 @@ class TazalauType(WithExcelType):
 
             excel_line_number = row['excel_line_number']
             print(f"[Worker {worker_id}] row: {excel_line_number} -> start")
-            self.run(browser, connection, row, worker_id)
+            self.run(browser, connection, row)
 
         connection.commit()
         connection.close()
         browser.driver.quit()
 
-    def run(self, browser, connection, row, worker_id):
-# {'id': 27, 'excel_line_number': 28, 'iin': '901006402244', 'data_vnesud': None, 'data_sud': None, 'data_vosstanovlenie': None, 'status': '', 'status_text': ''}
-        print(dict(row))
-        # bankruptcyAndInsolvent = "https://tazalau.qoldau.kz/ru/list/bankruptcy-and-insolvent"
-        # bankruptcyAndInsolventName = "Внесудебное банкротство"
-        # bankruptcyAndInsolventType = 1
+    def run(self, browser, connection, row):
         iin = row['iin']
-        vnesud_link = f"https://tazalau.qoldau.kz/ru/list/bankruptcy-and-insolvent?flApplicantIin={iin}"
-        # data_vnesud = ''
-        browser.safe_get(vnesud_link)
-        if browser.htmlHasText('Нет записей'):
-            # data_vnesud = 'Нет записей'
-            pass
+        links = {
+            'data_vnesudebnoe': f"https://tazalau.qoldau.kz/ru/list/bankruptcy-and-insolvent?flApplicantIin={iin}",
+            'data_sudebnoe': f"https://tazalau.qoldau.kz/ru/list/bankruptcy/judicial?flApplicantXin={iin}",
+            'data_vosstanovlenie': f"https://tazalau.qoldau.kz/ru/list/bankruptcy/recovery?flApplicantXin={iin}",
+        }
+
+        error = False
+        for column, link in links.items():
+            browser.safe_get(link)
+            for _ in range(10):
+                time.sleep(1)
+                if browser.htmlHasText('ИИН'):
+                    break
+            else:
+                error = True
+                continue
+
+            table = browser.driver.find_element(By.CSS_SELECTOR, "table.table")
+            headers = [
+                th.text.strip()
+                for th in table.find_elements(By.CSS_SELECTOR, "thead th")
+            ]
+
+            rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
+
+            data = []
+            for row_data in rows:
+                cells = row_data.find_elements(By.CSS_SELECTOR, "td")
+                values = [cell.text.strip() for cell in cells]
+
+                row_dict = dict(zip(headers, values))
+                data.append(row_dict)
+
+            if browser.htmlHasText('Нет записей'):
+                data = [{'message': 'Нет записей'}]
+
+            safe_execute(connection, f'''UPDATE {self.table_name()}
+                        SET {column} = ?
+                        WHERE id = ?
+                        ''',
+                        (json.dumps(data, ensure_ascii=False),
+                        row['id']),)
+
+        if not error:
+            safe_execute(connection, f'''UPDATE {self.table_name()}
+                        SET status = ?,
+                        status_text = ?
+                        WHERE id = ?
+                        ''',
+                        ('success',
+                        '',
+                        row['id']),)
         else:
-            print('pass')
-            pass
-
-
-        time.sleep(1000)
-
-        # sud_link = f"https://tazalau.qoldau.kz/ru/list/bankruptcy/judicial?flApplicantXin={iin}"
-        # browser.safe_get(sud_link)
-        # time.sleep(10)
-
-        # vosstanovlenie_link = f"https://tazalau.qoldau.kz/ru/list/bankruptcy/recovery?flApplicantXin={iin}"
-        # browser.safe_get(vosstanovlenie_link)
-        # time.sleep(10)
-
-        # data = self._get_data(row)
-
-        # try:
-        #     runMain(browser, data, worker_id)
-        #     safe_execute(connection, f'''UPDATE {self.table_name()}
-        #                 SET status = ?,
-        #                 status_text = ?
-        #                 WHERE id = ?
-        #                 ''',
-        #                 ('success',
-        #                 '',
-        #                 row['id']),)
-        # except Exception as e:
-        #     safe_execute(connection, f'''UPDATE {self.table_name()}
-        #                 SET status = ?,
-        #                 status_text = ?
-        #                 WHERE id = ?''',
-        #                 ('error', str(e), row['id']),)
+            safe_execute(connection, f'''UPDATE {self.table_name()}
+                        SET status = ?,
+                        status_text = ?
+                        WHERE id = ?
+                        ''',
+                        ('error',
+                        'Ошибка сайта',
+                        row['id']),)
 
     def save_to_excel(self):
+        def get_header(rows, column):
+            r = []
+            for row in rows:
+                data = json.loads(row[column])
+                if not 'message' in data:
+                    r = list(data[0].keys())
+                    break
+            return r
+
+        def get_excel_rows(row, column):
+            rows = json.loads(row[column])
+            excel_rows = []
+
+            for row_data in rows:
+                excel_row = [row['iin']]
+                if 'message' in row_data:
+                    excel_row.append(row_data['message'])
+                else:
+                    excel_row.extend(list(row_data.values()))
+
+                excel_rows.append(excel_row)
+
+            return excel_rows
         print('Сохраняем на эксель файл...')
-        print('daje daje')
-        # base, ext = os.path.splitext(self.cfg.get('file'))
-        # dst_file = f"{base}_biba{ext}"
-        # shutil.copy(self.cfg.get('file'), dst_file)
 
-        # connection = sqlite3.connect(self.cfg.get('db_name'))
-        # connection.row_factory = sqlite3.Row
-        # cursor = connection.cursor()
+        connection = sqlite3.connect(self.cfg.get('db_name'))
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
 
-        # table_name = self.table_name()
-        # rows = cursor.execute(f"SELECT * FROM {table_name}").fetchall()
-        # connection.close()
+        table_name = self.table_name()
+        rows = cursor.execute(f"SELECT * FROM {table_name} ORDER BY iin").fetchall()
+        connection.close()
 
-        # wb = load_workbook(dst_file)
-        # sheet = wb.active
+        vnesudebnoe_header = get_header(rows, 'data_vnesudebnoe')
+        vnesudebnoe_header.insert(0, 'ИИН')
+        sudebnoe_header = get_header(rows, 'data_sudebnoe')
+        sudebnoe_header.insert(0, 'ИИН')
+        vosstanovlenie_header = get_header(rows, 'data_vosstanovlenie')
+        vosstanovlenie_header.insert(0, 'ИИН')
 
-        # for row in rows:
-        #     line_number = row['excel_line_number']
-        #     for key in self.excel_map():
-        #         value = self.excel_map()[key]
-        #         sheet.cell(row=line_number, column=self.cfg.index(value) + 1, value=row[key])
+        wb = Workbook()
 
-        # wb.save(dst_file)
+        sheet1 = wb.active
+        sheet1.title = "Внесудебное"
+        sheet2 = wb.create_sheet(title="Судебное")
+        sheet3 = wb.create_sheet(title="Восст платежоспособности")
+        sheet1.append(vnesudebnoe_header)
+        sheet2.append(sudebnoe_header)
+        sheet3.append(vosstanovlenie_header)
+
+        for row in rows:
+            for excel_row in get_excel_rows(row, 'data_vnesudebnoe'):
+                sheet1.append(excel_row)
+
+            for excel_row in get_excel_rows(row, 'data_sudebnoe'):
+                sheet2.append(excel_row)
+
+            for excel_row in get_excel_rows(row, 'data_vosstanovlenie'):
+                sheet3.append(excel_row)
+
+        wb.save('tazalau_biba.xlsx')
         print('Сохранено!')
+
