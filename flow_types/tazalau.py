@@ -171,9 +171,10 @@ class TazalauType(WithExcelType):
             r = []
             for row in rows:
                 data = json.loads(row[column])
-                if not 'message' in data:
+                if not 'message' in data[0]:
                     r = list(data[0].keys())
                     break
+
             return r
 
         def get_excel_rows(row, column):
