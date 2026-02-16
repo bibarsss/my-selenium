@@ -1,5 +1,6 @@
 from pathlib import Path
 import sqlite3
+import time
 from office_sud_kz.iskstatus.main import run as iskstatusRun
 from flow_types.baseWithExcel import WithExcelType
 from common.sqlite import safe_execute
@@ -22,6 +23,8 @@ class IskstatusType(WithExcelType):
             'result_text': 'iskstatus_excel_result_text',
             'result_otvet4ik_iin': 'iskstatus_excel_result_otvet4ik_iin',
             'result_otvet4ik_name': 'iskstatus_excel_result_otvet4ik_name',
+            'result_oblast': 'iskstatus_excel_result_oblast',
+            'result_sud': 'iskstatus_excel_result_sud',
         }
 
     def migration(self):
@@ -43,6 +46,8 @@ class IskstatusType(WithExcelType):
                         result_text TEXT,
                         result_otvet4ik_iin TEXT,
                         result_otvet4ik_name TEXT,
+                        result_oblast TEXT,
+                        result_sud TEXT,
                         status TEXT,
                         status_text TEXT
                     )
@@ -96,7 +101,9 @@ class IskstatusType(WithExcelType):
                         result_number = ?,
                         result_text = ?,
                         result_otvet4ik_iin = ?,
-                        result_otvet4ik_name = ?
+                        result_otvet4ik_name = ?,
+                        result_oblast = ?,
+                        result_sud = ?
                         WHERE id = ?
                         ''',
                         ('success',
@@ -108,6 +115,8 @@ class IskstatusType(WithExcelType):
                         parsed_data['result_text'],
                         parsed_data['result_otvet4ik_iin'],
                         parsed_data['result_otvet4ik_name'],
+                        parsed_data['result_oblast'],
+                        parsed_data['result_sud'],
                         row['id']),)
         except Exception as e:
             safe_execute(connection, f"UPDATE {self.table_name()} SET status = ?, status_text = ? WHERE id = ?", ('error', str(e), row['id']))

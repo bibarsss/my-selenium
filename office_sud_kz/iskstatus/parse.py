@@ -43,6 +43,7 @@ def get_result_data(items, browser):
     # result_otvet4ik_iin = 'iin biba'
     # result_otvet4ik_name = 'name biba'
     result_otvet4ik_iin, result_otvet4ik_name = get_otvetchik_data(browser)
+    result_oblast, result_sud = get_oblast_and_sud(browser)
     for item in reversed(items):
         result = get_result(item['text'])
         if result is not None:
@@ -60,7 +61,9 @@ def get_result_data(items, browser):
                 'result_number': result_number,
                 'result_text': result_text,
                 'result_otvet4ik_iin': result_otvet4ik_iin,
-                'result_otvet4ik_name': result_otvet4ik_name
+                'result_otvet4ik_name': result_otvet4ik_name,
+                'result_oblast': result_oblast,
+                'result_sud': result_sud,
             }
 
     return None
@@ -143,3 +146,18 @@ def get_otvetchik_data(browser):
         pass
 
     return '', ''
+
+def get_oblast_and_sud(browser):
+    oblast = browser.driver.find_element(
+            By.XPATH,
+            "//label[contains(text(),'Область')]/following::input[1]"
+        ).get_attribute("value")
+
+    sud = browser.driver.find_element(
+        By.XPATH,
+        "//label[contains(text(),'Судебный орган')]/following::input[1]"
+    ).get_attribute("value")
+
+    return oblast, sud
+
+
