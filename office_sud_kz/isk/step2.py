@@ -17,7 +17,12 @@ def run(browser: Browser, data)->bool:
     textByLabel(browser, 'Сумма иска', data['rows'][0]['summaIska'])
     textByLabel(browser, 'Сумма государственной пошлины (для расчета воспользуйтесь калькулятором, нажав на иконку в поле ввода)', data['rows'][0]['powlina'])
 
-    uploadFile(browser, data['rows'][0]['powlina_file_path'], 'selectPaymentScanUploader1')
+    powlina_file_path = data['rows'][0]['powlina_file_path']
+    if data['type'] == 2:
+        powlina_file_path = data['rows'][0]['powlina_many_file_path']
+
+    uploadFile(browser, powlina_file_path, 'selectPaymentScanUploader1')
+
     browser.wait_for_loader_done()
 
     c = 0

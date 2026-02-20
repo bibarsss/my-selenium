@@ -218,6 +218,7 @@ class IskType(WithExcelType):
                 "isk_file_path": str(dir / self.cfg.get('isk_file_name')),
                 "isk_file_realpath": str(dir / row['isk_file_realname']),
                 'isk_many_file_path': str(isk_many_file_path),
+                'powlina_many_file_path': str(dir.parent / self.cfg.get('isk_powlina_file_name')),
                 'blank_path': str(blank_path)
             }
 
