@@ -1,9 +1,20 @@
+from multiprocessing import Process
 from pathlib import Path
 import sqlite3
+
+from openpyxl import load_workbook
 from flow_types.baseWithExcel import WithExcelType
 import re
 
 class MoveBy2SubfolderType(WithExcelType):
+    @property
+    def type(self):
+        return self.__type
+
+    @type.setter
+    def type(self, value):
+        self.__type = value
+
     def label(self)->str:
         return 'Переместить папки через 2 подпапки'
 
@@ -36,6 +47,27 @@ class MoveBy2SubfolderType(WithExcelType):
                             ''')
         connection.commit()
         connection.close()
+
+    def start(self):
+        types = {
+            1: 'Переместить папки через 2 подпапки',
+            2: 'Выборка документов',
+        }
+        options = ".\n".join(f"{k} -> {v}" for k, v in types.items())
+        try:
+            print('==========================')
+            print(options)
+            print('==========================')
+
+            self.type = int(input(f"Введите тип флоу: "))
+            if self.type not in types.keys():
+                print("Неправильный тип флоу: ", self.type)
+                return
+        except Exception as e:
+            print("Неправильный тип флоу!")
+            return
+
+        super().start()
 
     def insert(self, row: tuple, cursor: sqlite3.Cursor, i):
         def safe_get(column_name: str) -> str:
@@ -85,7 +117,10 @@ class MoveBy2SubfolderType(WithExcelType):
         sud = sanitize(row['sud_folder_name'])
         client = sanitize(row['client_folder_name'])
 
-        target_dir = Path(main) / sud / client
+        if self.type == 1:
+            target_dir = Path(main) / sud / client
+        elif self.type == 2:
+            target_dir = Path(main)
 
         for pdf in Path(".").glob("*.pdf"):
             try:
