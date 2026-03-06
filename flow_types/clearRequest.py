@@ -1,17 +1,17 @@
 # Cкачиванием файлов с ск Письмо
-from multiprocessing import Process
-import os
-import sqlite3
-import time
-
-import requests
-import urllib3
-from common.sqlite import safe_execute
 from flow_types.baseWithoutExcel import WithoutExcelType
-from globals import RETRY_COUNT
 from office_sud_kz.clearRequest.main import run as clearRequestRun
+from office_sud_kz.clearRequest.smart_clear_request import run as smartClearRequestRun
 
 class ClearRequestType(WithoutExcelType):
+    @property
+    def type(self):
+        return self.__type
+
+    @type.setter
+    def type(self, value):
+        self.__type = value
+
     # даты включительно
     def label(self):
         return 'Удаление всех ожидающих отправки дел'
@@ -27,6 +27,25 @@ class ClearRequestType(WithoutExcelType):
 
     def start(self):
         from office_sud_kz.auth import auth
+
+        types = {
+            1: 'Удаление всех ожидающих отправки дел',
+            2: 'Умное удаление',
+        }
+        options = ".\n".join(f"{k} -> {v}" for k, v in types.items())
+        try:
+            print('==========================')
+            print(options)
+            print('==========================')
+
+            self.type = int(input(f"Введите тип флоу: "))
+            if self.type not in types.keys():
+                print("Неправильный тип флоу: ", self.type)
+                return
+        except Exception as e:
+            print("Неправильный тип флоу!")
+            return
+
         browser = self.browser()
 
         while True:
@@ -37,5 +56,7 @@ class ClearRequestType(WithoutExcelType):
             except Exception:
                 continue
 
-        clearRequestRun(browser)
-
+        if self.type == 1:
+            clearRequestRun(browser)
+        elif self.type == 2:
+            smartClearRequestRun(browser)

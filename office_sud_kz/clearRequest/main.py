@@ -13,11 +13,9 @@ def run(browser: Browser):
         time.sleep(2)
 
     while True:
-        print('while true')
         browser.refresh()
         delete_buttons = browser.driver.find_elements(By.XPATH, "//table[contains(@class,'oldstyle')]//a[img[contains(@src,'delete.png')]]")
         for _ in range(len(delete_buttons)):
-            print('obwii')
             try:
                 clickDeleteAndConfirm(browser, 0)  # alw
                 browser.wait_for_loader_done()
