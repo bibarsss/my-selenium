@@ -124,6 +124,16 @@ class RenamePdfType(WithoutExcelType):
             if 'исполнительная надпись' in all_text:
                 return 'исп_надпись'
 
+            if 'медиации' in all_text:
+                if 'предмет спора (конфликта)' in all_text:
+                    return 'медиация_договор'
+
+                if 'з а я в л е н и е на проведение медиации' in all_text:
+                    return 'медиация_заявление'
+
+                if 'с о г л а ш е н и е  об урегулировании спора (конфликта) в порядке медиации' in all_text:
+                    return 'медиация_соглашение'
+
             return ''
 
         def extract_iin(text):
@@ -183,14 +193,21 @@ class RenamePdfType(WithoutExcelType):
 
                     new_path = file_path.with_name(name)
 
+                    # try:
+                    #     file_path.rename(new_path)
+                    #     print(f"[Worker {worker_id}] Renamed: {file_path.name} -> {new_path.name}")
+                    #     break
+
+                    # except FileExistsError:
+                    #     count += 1
+                    #     continue
                     try:
-                        file_path.rename(new_path)
+                        os.link(file_path, new_path)  # fails if exists
+                        os.unlink(file_path)          # remove original
                         print(f"[Worker {worker_id}] Renamed: {file_path.name} -> {new_path.name}")
                         break
-
                     except FileExistsError:
                         count += 1
-                        continue
 
             except Exception as e:
                 print(f"[Worker {worker_id}] Couldn't read pdf file: [{Path(row['file_path'])}]")
