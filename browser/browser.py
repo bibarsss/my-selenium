@@ -4,7 +4,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 import os
 import platform
 
@@ -60,11 +60,21 @@ class Browser:
     def refresh(self):
         self.driver.refresh()
 
+    # def wait_for_loader_done(self, timeout=30):
+    #     try:
+    #         WebDriverWait(self.driver, timeout).until(lambda d: "d-none" in d.find_element(By.CSS_SELECTOR, "span.loader").get_attribute("class"))
+    #     except TimeoutException:
+    #         raise TimeoutException("Loader did not disappear within timeout")
+
     def wait_for_loader_done(self, timeout=30):
-        try:
-            WebDriverWait(self.driver, timeout).until(lambda d: "d-none" in d.find_element(By.CSS_SELECTOR, "span.loader").get_attribute("class"))
-        except TimeoutException:
-            raise TimeoutException("Loader did not disappear within timeout")
+        def loader_hidden(driver):
+            try:
+                el = driver.find_element(By.CSS_SELECTOR, "span.loader")
+                return "d-none" in el.get_attribute("class")
+            except StaleElementReferenceException:
+                return False  # retry
+
+        WebDriverWait(self.driver, timeout).until(loader_hidden)
 
     def htmlHasText(self, text: str) -> bool:
         xpath = f'//*[contains(normalize-space(.), "{text.strip()}")]'
