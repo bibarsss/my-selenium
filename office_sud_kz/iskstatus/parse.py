@@ -40,8 +40,6 @@ def get_dynamic_review_items(browser):
     return result
 
 def get_result_data(items, browser):
-    # result_otvet4ik_iin = 'iin biba'
-    # result_otvet4ik_name = 'name biba'
     result_otvet4ik_iin, result_otvet4ik_name = get_otvetchik_data(browser)
     result_oblast, result_sud = get_oblast_and_sud(browser)
     for item in reversed(items):
@@ -50,9 +48,10 @@ def get_result_data(items, browser):
             result_date = item['date']
             result_sud_name = get_result_sud_name(item['text'])
             result_number = get_result_number(item['text'])
-            result_text = ''
-            if result in ['возврат', 'отклонено']:
-                result_text = item['text']
+            # result_text = ''
+            # if result in ['возврат', 'отклонено']:
+            #     result_text = item['text']
+            result_text = item['text']
 
             return {
                 'result': result,
