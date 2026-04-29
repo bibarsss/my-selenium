@@ -36,7 +36,7 @@ def run(browser: Browser, data, worker_id):
     print(f'[Worker {worker_id}] step 4')
     step4.run(browser, data)
 
-    print(f'[Worker {worker_id}] step 5')
-    step5.run(browser, data)
+    # print(f'[Worker {worker_id}] step 5')
+    # step5.run(browser, data)
 
     return
