@@ -46,7 +46,7 @@ class DistributeIspListType(WithoutExcelType):
         connection.commit()
         ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()}")]
 
-        print('Парсим файлы...')
+        print('Читаем файлы...')
         n_workers = 10
         chunks = self.chunk_list(ids, n_workers)
         parse_files = []
@@ -60,6 +60,7 @@ class DistributeIspListType(WithoutExcelType):
         ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()} WHERE region IS NOT NULL")]
         connection.close()
 
+        print('Перемещаем файлы...')
         chunks = self.chunk_list(ids, n_workers)
         move_files = []
         for wid, chunk in enumerate(chunks):
