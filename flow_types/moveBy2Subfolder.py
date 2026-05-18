@@ -122,7 +122,9 @@ class MoveBy2SubfolderType(WithExcelType):
         elif self.type == 2:
             target_dir = Path(main)
 
-        for pdf in Path(".").glob("*.pdf"):
+        for pdf in Path(".").rglob("*.pdf"):
+            if target_dir in pdf.parents:
+                continue
             try:
                 if row['search_text'] in pdf.name:
                     target_file = target_dir / pdf.name
