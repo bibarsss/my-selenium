@@ -10,6 +10,8 @@ from common.sqlite import safe_execute
 from flow_types.baseWithoutExcel import WithoutExcelType
 import shutil
 
+BLACK_LIST = ['020116601379']
+
 class RenamePdfType(WithoutExcelType):
     @property
     def type(self):
@@ -49,7 +51,8 @@ class RenamePdfType(WithoutExcelType):
         types = {
             1: 'Ренейм ИИН, ИН, Пост, ИЛ (иин)',
             2: 'Решение для аисоип (фио)',
-            3: 'Ренейм определение (исп листы должны иметь в названии слово "лист")'
+            3: 'Ренейм определение (исп листы должны иметь в названии слово "лист")',
+            4: 'Ренейм платежное поручение'
         }
         options = ".\n".join(f"{k} -> {v}" for k, v in types.items())
         try:
@@ -86,13 +89,129 @@ class RenamePdfType(WithoutExcelType):
             self.rename_to_fio_aisoip()
         elif self.type == 3:
             self.rename_to_iin_definition()
+        elif self.type == 4:
+            self.rename_to_iin_payment_order()
 
-    def rename_to_iin(self):
+    def _get_ids(self):
         connection = sqlite3.connect(self.cfg.get('db_name') )
         connection.row_factory = sqlite3.Row
         cursor = connection.cursor()
         ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()}")]
         connection.close()
+
+        return ids
+
+    def rename_to_iin_payment_order(self):
+        ids = self._get_ids()
+
+        print('Парсим файлы и переименовываем...')
+        n_workers = 5
+        chunks = self.chunk_list(ids, n_workers)
+        rename_files = []
+        for wid, chunk in enumerate(chunks):
+            p = Process(target=self.to_iin_payment_order, args=(chunk, wid))
+            p.start()
+            rename_files.append(p)
+        for p in rename_files:
+            p.join()
+
+    def to_iin_payment_order(self, ids, worker_id):
+        def extract_iin(text):
+            def is_probable_iin(num):
+                if len(num) != 12 or not num.isdigit():
+                    return False
+                try:
+                    datetime.strptime(num[:6], "%y%m%d")
+                    return True
+                except ValueError:
+                    return False
+
+            def try_pad(num):
+                """Left-pad numeric string with zeros up to 12 chars and validate as IIN."""
+                if not num.isdigit() or len(num) > 12:
+                    return None
+                padded = num.zfill(12)
+                if padded in BLACK_LIST:
+                    return None
+                if is_probable_iin(padded):
+                    return padded
+                return None
+
+            # 1) Structured pattern: defendant IIN inside "Иску к ( NAME <digits> )".
+            #    Accept 9-12 digits since leading zeros may have been stripped by the source system.
+            for m in re.finditer(r'Иску\s+к\s*\(\s*[^()]*?(\d{9,12})\s*\)', text, flags=re.IGNORECASE):
+                candidate = try_pad(m.group(1))
+                if candidate:
+                    return candidate
+
+            # 2) Fallback: any standalone 12-digit run that validates as IIN.
+            for num in re.findall(r'\b\d{12}\b', text):
+                if num in BLACK_LIST:
+                    continue
+                candidate = try_pad(num)
+                if candidate:
+                    return candidate
+
+            return None
+
+        print(f"[Worker {worker_id}] starting...")
+        connection = sqlite3.connect(self.cfg.get('db_name'), timeout=30)
+        connection.execute("PRAGMA journal_mode=WAL;")
+        connection.execute("PRAGMA synchronous=NORMAL;")
+        connection.execute("PRAGMA busy_timeout = 5000;")
+        connection.row_factory = sqlite3.Row
+
+        placeholder = ','.join('?' * len(ids))
+        rows = connection.execute(f"SELECT * FROM {self.table_name()} WHERE id in ({placeholder})", ids).fetchall()
+
+        connection.close()
+        for row in rows:
+            try:
+                file_path = Path(row['file_path'])
+                text = read(os.path.abspath(str(file_path)))
+                text = " ".join(text.splitlines())
+
+                prefix = "плат_поручение"
+
+                iin = extract_iin(text)
+                if not iin:
+                    continue
+
+                if 'платежное поручение' not in text.lower():
+                    continue
+
+                count = 0
+                while True:
+                    suffix = f"-{count}" if count else ""
+                    name = f"{iin}{suffix}.pdf"
+
+                    if prefix:
+                        name = f"{prefix} - {name}"
+
+                    new_path = file_path.with_name(name)
+
+                    # try:
+                    #     file_path.rename(new_path)
+                    #     print(f"[Worker {worker_id}] Renamed: {file_path.name} -> {new_path.name}")
+                    #     break
+
+                    # except FileExistsError:
+                    #     count += 1
+                    #     continue
+                    try:
+                        os.link(file_path, new_path)  # fails if exists
+                        os.unlink(file_path)          # remove original
+                        print(f"[Worker {worker_id}] Renamed: {file_path.name} -> {new_path.name}")
+                        break
+                    except FileExistsError:
+                        count += 1
+
+            except Exception as e:
+                print(f"[Worker {worker_id}] Couldn't read pdf file: [{Path(row['file_path'])}]")
+                continue
+
+    def rename_to_iin(self):
+        ids = self._get_ids()
 
         print('Парсим файлы и переименовываем...')
         n_workers = 5
@@ -137,7 +256,6 @@ class RenamePdfType(WithoutExcelType):
             return ''
 
         def extract_iin(text):
-            black_list = ['020116601379']
             def is_probable_iin(num):
                 try:
                     datetime.strptime(num[:6], "%y%m%d")
@@ -152,7 +270,7 @@ class RenamePdfType(WithoutExcelType):
             #         return candidate
 
             for num in re.findall(r'\b\d{12}\b', text):
-                if num in black_list:
+                if num in BLACK_LIST:
                     continue
 
                 if is_probable_iin(num):
@@ -214,11 +332,7 @@ class RenamePdfType(WithoutExcelType):
                 continue
 
     def rename_to_fio_aisoip(self):
-        connection = sqlite3.connect(self.cfg.get('db_name') )
-        connection.row_factory = sqlite3.Row
-        cursor = connection.cursor()
-        ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()}")]
-        connection.close()
+        ids = self._get_ids()
 
         print('Парсим файлы и переименовываем...')
         n_workers = 5
