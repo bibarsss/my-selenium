@@ -37,6 +37,7 @@ class MoveBy2SubfolderType(WithExcelType):
         cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS {self.table_name()}(
                         id INTEGER PRIMARY KEY,
+                        group_id TEXT,
                         excel_line_number INTEGER,
                         search_text TEXT,
                         sud_folder_name TEXT,
@@ -52,6 +53,7 @@ class MoveBy2SubfolderType(WithExcelType):
         types = {
             1: 'Переместить папки через 2 подпапки',
             2: 'Выборка документов',
+            3: 'Переместить папки через 2 подпапки (с группировкой)',
         }
         options = ".\n".join(f"{k} -> {v}" for k, v in types.items())
         try:
@@ -82,6 +84,7 @@ class MoveBy2SubfolderType(WithExcelType):
             'sud_folder_name': safe_get('moveby2subfolder_excel_sud_folder_name'),
             'client_folder_name': safe_get('moveby2subfolder_excel_client_folder_name'),
             "excel_line_number": i,
+            "group_id": safe_get('moveby2subfolder_excel_group_id'),
             }
 
         columns = ", ".join(data.keys())
@@ -116,11 +119,14 @@ class MoveBy2SubfolderType(WithExcelType):
         main = sanitize(self.cfg.get('moveby2subfolder_main_folder_name'))
         sud = sanitize(row['sud_folder_name'])
         client = sanitize(row['client_folder_name'])
+        grouped = sanitize(row['group_id'])
 
         if self.type == 1:
             target_dir = Path(main) / sud / client
         elif self.type == 2:
             target_dir = Path(main)
+        elif self.type == 3:
+            target_dir = Path(main) / grouped /client
 
         for pdf in Path(".").rglob("*.pdf"):
             if target_dir in pdf.parents:
