@@ -65,7 +65,20 @@ def get_result_data(items, browser):
                 'result_sud': result_sud,
             }
 
-    return None
+    if len(items) == 0:
+        return None
+
+    return {
+        'result': 'неизвестно',
+        'result_date': item['date'],
+        'result_sud_name': '',
+        'result_number': '',
+        'result_text': item['text'],
+        'result_otvet4ik_iin': result_otvet4ik_iin,
+        'result_otvet4ik_name': result_otvet4ik_name,
+        'result_oblast': result_oblast,
+        'result_sud': result_sud,
+    }
 
 def get_result_sud_name(text):
     text = text.strip()
@@ -104,6 +117,8 @@ def get_result(text):
         return 'отклонено'
     elif 'иск отправлено' in text:
         return 'иск отправлено'
+    elif 'заявление успешно отправлено' in text:
+        return 'заявление успешно отправлено'
     else:
         return None
 
@@ -123,7 +138,7 @@ def get_otvetchik_data(browser):
                     ".//div[label[contains(.,'Сторона процесса')]]/p"
                 ).text.strip().lower()
 
-                if role != "ответчик":
+                if role not in ["ответчик", "должник"]:
                     continue
 
                 iin = row.find_element(

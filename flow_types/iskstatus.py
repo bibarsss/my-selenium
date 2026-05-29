@@ -7,7 +7,7 @@ from common.sqlite import safe_execute
 
 class IskstatusType(WithExcelType):
     def label(self)->str:
-        return 'ИСК - проверка статуса'
+        return 'ИСК, СП - Проверка статуса'
 
     def table_name(self)->str:
         return 'iskstatus'
