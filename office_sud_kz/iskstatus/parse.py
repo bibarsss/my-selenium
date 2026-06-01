@@ -105,20 +105,22 @@ def get_result(text):
 
     if 'решение' in text:
         return 'решение'
+    elif 'вынесено судебный приказ' in text:
+        return 'вынесено СП'
     elif 'медиации' in text:
         return 'медиация'
     elif 'упрощенного производства' in text:
         return 'упр'
-    elif 'зарегистрировано' in text:
-        return 'зарегистрировано'
     elif 'возвра' in text:
         return 'возврат'
     elif 'отклон' in text:
         return 'отклонено'
+    elif 'зарегистрировано' in text:
+        return 'зарегистрировано'
     elif 'иск отправлено' in text:
         return 'иск отправлено'
     elif 'заявление успешно отправлено' in text:
-        return 'заявление успешно отправлено'
+        return 'заявление отправлено'
     else:
         return None
 
