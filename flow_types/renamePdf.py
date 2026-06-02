@@ -295,6 +295,13 @@ class RenamePdfType(WithoutExcelType):
                 text = read(os.path.abspath(str(file_path)))
                 text = " ".join(text.splitlines())
 
+                company = None
+                if '151140014481' in text:
+                    company = 'CreditNOVA'
+
+                if '220440007472' in text:
+                    company = 'LEGALMONEY'
+
                 prefix = get_prefix(text)
 
                 iin = extract_iin(text)
@@ -308,6 +315,9 @@ class RenamePdfType(WithoutExcelType):
 
                     if prefix:
                         name = f"{prefix} - {name}"
+
+                    if company:
+                        name = f"{company} - {name}"
 
                     new_path = file_path.with_name(name)
 
