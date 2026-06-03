@@ -42,6 +42,7 @@ def get_dynamic_review_items(browser):
 def get_result_data(items, browser):
     result_otvet4ik_iin, result_otvet4ik_name = get_otvetchik_data(browser)
     result_oblast, result_sud = get_oblast_and_sud(browser)
+    result_title = get_title(browser)
     for item in reversed(items):
         result = get_result(item['text'])
         if result is not None:
@@ -63,6 +64,7 @@ def get_result_data(items, browser):
                 'result_otvet4ik_name': result_otvet4ik_name,
                 'result_oblast': result_oblast,
                 'result_sud': result_sud,
+                'result_title': result_title,
             }
 
     if len(items) == 0:
@@ -78,6 +80,7 @@ def get_result_data(items, browser):
         'result_otvet4ik_name': result_otvet4ik_name,
         'result_oblast': result_oblast,
         'result_sud': result_sud,
+        'result_title': result_title,
     }
 
 def get_result_sud_name(text):
@@ -176,4 +179,18 @@ def get_oblast_and_sud(browser):
 
     return oblast, sud
 
+def get_title(browser):
+    try:
+        title_el = browser.driver.find_element(
+            By.CSS_SELECTOR,
+            "span.tab__inner-title"
+        )
+        full_text = title_el.text.strip()
 
+        parts = full_text.split('>')
+        if len(parts) >= 3:
+            return parts[-1].strip()
+
+        return ''
+    except NoSuchElementException:
+        return ''
