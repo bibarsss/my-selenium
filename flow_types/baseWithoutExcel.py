@@ -21,3 +21,8 @@ class WithoutExcelType(Type):
         params = data.copy()
         params["id"] = row_id
         safe_execute(connection, query, params)
+
+    def delete(self, row_id, connection):
+        query = f"DELETE FROM {self.table_name()} WHERE id = :id"
+        params = {"id": row_id}
+        safe_execute(connection, query, params)

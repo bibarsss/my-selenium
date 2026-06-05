@@ -17,6 +17,7 @@ from flow_types.clearRequest import ClearRequestType
 from flow_types.getSud import GetSudType
 from flow_types.tazalau import TazalauType
 from flow_types.extract_files import ExtractFilesType
+from flow_types.getExcelFromTalonPdf import GetExcelFromTalonPdfType
 
 types = {
     1: IskType,
@@ -38,6 +39,7 @@ types = {
     17: GetSudType,
     18: TazalauType,
     19: ExtractFilesType,
+    20: GetExcelFromTalonPdfType
 }
 
 excelTypes = {
