@@ -56,8 +56,7 @@ class GetExcelFromTalonPdfType(WithoutExcelType):
         ids = [r[0] for r in cursor.execute(f"SELECT id FROM {self.table_name()}")]
 
         print('Парсим файлы...')
-        # n_workers = 10
-        n_workers = 1
+        n_workers = 15
         chunks = self.chunk_list(ids, n_workers)
         parse_files = []
         for wid, chunk in enumerate(chunks):
