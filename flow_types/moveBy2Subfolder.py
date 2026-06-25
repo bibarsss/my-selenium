@@ -128,16 +128,20 @@ class MoveBy2SubfolderType(WithExcelType):
         elif self.type == 3:
             target_dir = Path(main) / grouped /client
 
-        for pdf in Path(".").rglob("*.pdf"):
-            if target_dir in pdf.parents:
+        for file in Path(".").rglob("*"):
+            if file.name.startswith("~$"):
+                continue
+            if file.suffix.lower() not in (".pdf", ".docx"):
+                continue
+            if target_dir in file.parents:
                 continue
             try:
-                if row['search_text'] in pdf.name:
-                    target_file = target_dir / pdf.name
+                if row['search_text'] in file.name:
+                    target_file = target_dir / file.name
                     if target_file.exists():
-                        pdf.unlink()
+                        file.unlink()
                     else:
                         target_dir.mkdir(parents=True, exist_ok=True)
-                        pdf.rename(target_file)
-            except Exception as e:
+                        file.rename(target_file)
+            except Exception:
                 continue
