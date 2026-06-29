@@ -106,7 +106,9 @@ def get_result_number(text):
 def get_result(text):
     text = text.lower().strip()
 
-    if 'решение' in text:
+    if 'лист' in text:
+        return 'испол лист'
+    elif 'решение' in text:
         return 'решение'
     elif 'вынесено судебный приказ' in text:
         return 'вынесено СП'
