@@ -48,5 +48,6 @@ excelTypes = {
     3: ApplicationType,
     4: SpType,
     5: DownloadIspListByTalonType,
-    6: GenerateFilesByTemplateType
+    6: GenerateFilesByTemplateType,
+    8: MoveBy2SubfolderType,
 }
